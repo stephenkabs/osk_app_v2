@@ -1,0 +1,44 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+Schema::create('property_expenses', function (Blueprint $table) {
+    $table->id();
+
+    $table->foreignId('property_id')->constrained()->cascadeOnDelete();
+    $table->foreignId('unit_id')->nullable()->constrained()->nullOnDelete();
+
+    $table->string('category'); // maintenance, utilities, security, admin, etc
+    $table->string('title');
+    $table->text('description')->nullable();
+
+    $table->decimal('amount', 12, 2);
+    $table->date('expense_date');
+
+    $table->string('reference')->nullable();
+    $table->string('payment_method')->nullable(); // cash, bank, mobile_money
+
+    $table->foreignId('recorded_by')->nullable()->constrained('users')->nullOnDelete();
+
+    $table->timestamps();
+});
+
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('property_expenses');
+    }
+};
