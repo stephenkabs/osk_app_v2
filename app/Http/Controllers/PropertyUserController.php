@@ -128,46 +128,110 @@ return redirect()->route('kyc.pending' );
     return view('properties.users.public_create', compact('property'));
 }
 
-    /**
-     * Simple user profile for a property (payments/attendance removed for now)
-     */
-// public function show(Request $request, Property $property, User $user)
-// {
-//     // ✅ Load ONLY this property's leases (with unit)
-//     $user->load([
-//         'leaseAgreements' => function ($q) use ($property) {
-//             $q->where('property_id', $property->id)
-//               ->with('unit')
-//               ->latest('signed_at')
-//               ->latest('created_at');
-//         }
-//     ]);
+public function exportCsv(Property $property)
+{
+    $fileName = 'tenants_import_ready_' . now()->format('Ymd_His') . '.csv';
 
-//     // ✅ Latest signed lease (active OR pending)
-//     $latestSignedLease = $user->leaseAgreements
-//         ->whereNotNull('signed_at')
-//         ->whereIn('status', ['active', 'pending'])
-//         ->first(); // already sorted by signed_at desc
+    return response()->stream(function () use ($property) {
+        $file = fopen('php://output', 'w');
 
-//     // ✅ Active lease (optional convenience)
-//     $activeLease = $user->leaseAgreements
-//         ->firstWhere('status', 'active');
+        // CSV HEADER
+        fputcsv($file, [
+            'name',
+            'email',
+            'whatsapp_phone',
+            'address',
+            'property_id', // informational only
+            'password',
+            'status',
+        ]);
 
-//     // ✅ Signed flag
-//     $hasSignedLease = !is_null($latestSignedLease);
+        $property->users()->each(function ($user) use ($file, $property) {
+            fputcsv($file, [
+                $user->name,
+                $user->email,
+                $user->whatsapp_phone,
+                $user->address,
+                $property->id, // shown but NOT trusted on import
+                '',
+                $user->status ?? 'active',
+            ]);
+        });
 
-//     // ✅ Recent leases (max 5)
-//     $recentLeases = $user->leaseAgreements->take(5);
+        fclose($file);
+    }, 200, [
+        'Content-Type'        => 'text/csv',
+        'Content-Disposition' => "attachment; filename={$fileName}",
+    ]);
+}
 
-//     return view('properties.users.show', compact(
-//         'property',
-//         'user',
-//         'activeLease',
-//         'latestSignedLease',
-//         'recentLeases',
-//         'hasSignedLease'
-//     ));
-// }
+public function importCsv(Request $request, Property $property)
+{
+    $request->validate([
+        'csv' => 'required|file|mimes:csv,txt',
+    ]);
+
+    $handle = fopen($request->file('csv')->getRealPath(), 'r');
+
+    // Read header
+    $header = fgetcsv($handle);
+
+    $expected = [
+        'name',
+        'email',
+        'whatsapp_phone',
+        'address',
+        'property_id',
+        'password',
+        'status',
+    ];
+
+    if ($header !== $expected) {
+        return back()->withErrors([
+            'csv' => 'Invalid CSV format. Please use the exported template.',
+        ]);
+    }
+
+    while (($row = fgetcsv($handle)) !== false) {
+        [
+            $name,
+            $email,
+            $phone,
+            $address,
+            $_propertyId, // ❌ IGNORED
+            $password,
+            $status
+        ] = $row;
+
+        $status = in_array($status, ['active','pending','ended'])
+            ? $status
+            : 'active';
+
+        $user = User::updateOrCreate(
+            ['email' => $email],
+            [
+                'name'           => $name,
+                'whatsapp_phone' => $phone,
+                'address'        => $address,
+                'property_id'    => $property->id, // ✅ FORCE VALID PROPERTY
+                'password'       => $password
+                    ? Hash::make($password)
+                    : Hash::make(Str::random(10)),
+                'status'         => $status,
+            ]
+        );
+
+        // ✅ ENSURE TENANT ROLE
+        if (! $user->hasRole('tenant')) {
+            $user->assignRole('tenant');
+        }
+    }
+
+    fclose($handle);
+
+    return back()->with('success', 'Tenants imported successfully.');
+}
+
 
 
 

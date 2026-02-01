@@ -403,7 +403,36 @@ Route::prefix('properties/{property}')
     [PropertyPaymentsController::class, 'payWithMobileMoney']
 )->name('property.payments.mobile');
 
+Route::middleware(['auth'])->group(function () {
 
+    // 📤 Export tenants (CSV)
+    Route::get(
+        '/properties/{property}/users-export/csv',
+        [PropertyUserController::class, 'exportCsv']
+    )->name('property.users.export.csv');
+
+    // 📥 Import tenants (CSV)
+    Route::post(
+        '/properties/{property}/users-import/csv',
+        [PropertyUserController::class, 'importCsv']
+    )->name('property.users.import.csv');
+
+});
+
+
+Route::middleware(['auth'])->group(function () {
+
+    Route::get(
+        '/properties/{property}/units-export/csv',
+        [PropertyUnitController::class, 'exportCsv']
+    )->name('property.units.export.csv');
+
+    Route::post(
+        '/properties/{property}/units-import/csv',
+        [PropertyUnitController::class, 'importCsv']
+    )->name('property.units.import.csv');
+
+});
 
 // routes/web.php
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {

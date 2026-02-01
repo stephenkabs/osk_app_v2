@@ -225,7 +225,7 @@ body {
 <div class="container-fluid">
   <div class="col-lg-11 mx-auto">
 
-    {{-- Header --}}
+    {{-- Header
     <div class="apple-header mb-4">
       <div>
         <div class="apple-title">Tenants</div>
@@ -248,7 +248,53 @@ body {
           <span class="btn-text">Copy</span>
         </button>
       </div>
-    </div>
+    </div> --}}
+
+    {{-- Header --}}
+<div class="apple-header mb-4">
+  <div>
+    <div class="apple-title">Tenants</div>
+    <div class="apple-sub">{{ $property->property_name }}</div>
+  </div>
+
+  <div class="d-flex gap-2 flex-wrap align-items-center">
+
+    {{-- ➕ ADD TENANT --}}
+    <a href="{{ route('property.users.create', $property->slug) }}"
+       class="af-btn">
+      <i class="fas fa-user-plus"></i> Add Tenant
+    </a>
+
+    {{-- 🔗 SIGNUP LINK --}}
+    <a href="{{ route('property.users.public.create', $property->slug) }}"
+       target="_blank"
+       class="af-btn-outline">
+      <i class="fas fa-link"></i> Signup Link
+    </a>
+
+    {{-- 📋 COPY LINK --}}
+    <button id="copyLinkBtn" class="af-btn-outline">
+      <i class="fas fa-copy"></i>
+      <span class="btn-text">Copy</span>
+    </button>
+
+    {{-- 📤 EXPORT CSV --}}
+    <a href="{{ route('property.users.export.csv', $property->slug) }}"
+       class="af-btn-outline"
+       title="Export tenants to CSV">
+      <i class="fas fa-file-csv"></i> Export
+    </a>
+
+    {{-- 📥 IMPORT CSV --}}
+    <button class="af-btn-outline"
+            data-bs-toggle="modal"
+            data-bs-target="#importCsvModal">
+      <i class="fas fa-upload"></i> Import
+    </button>
+
+  </div>
+</div>
+
 
     {{-- Filters --}}
     <div class="apple-card mb-3">
@@ -371,6 +417,49 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 600); // subtle Apple-like delay
 });
 </script>
+{{-- 📥 IMPORT CSV MODAL --}}
+<div class="modal fade" id="importCsvModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <form method="POST"
+          action="{{ route('property.users.import.csv', $property->slug) }}"
+          enctype="multipart/form-data"
+          class="modal-content">
+
+      @csrf
+
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold">Import Tenants (CSV)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <p class="text-muted small mb-2">
+          CSV must contain:
+          <code>name, email, whatsapp_phone, address, property_id</code>
+        </p>
+
+        <input type="file"
+               name="csv"
+               class="form-control"
+               accept=".csv"
+               required>
+      </div>
+
+      <div class="modal-footer border-0">
+        <button type="button"
+                class="btn btn-light"
+                data-bs-dismiss="modal">
+          Cancel
+        </button>
+
+        <button type="submit" class="btn btn-dark">
+          <i class="fas fa-upload me-1"></i> Import CSV
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
 
 
 @endsection

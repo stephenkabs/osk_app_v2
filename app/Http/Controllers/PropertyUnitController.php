@@ -65,6 +65,98 @@ class PropertyUnitController extends Controller
     // }
 
 
+public function exportCsv(Property $property)
+{
+    $fileName = 'units_'.$property->slug.'_'.now()->format('Ymd_His').'.csv';
+
+    return response()->stream(function () use ($property) {
+        $file = fopen('php://output', 'w');
+
+        // CSV headers
+        fputcsv($file, [
+            'code',
+            'type',
+            'floor',
+            'bedrooms',
+            'bathrooms',
+            'rent_amount',
+            'deposit_amount',
+            'size_sq_m',
+            'status',
+            'notes',
+        ]);
+
+        $property->units()->orderBy('code')->each(function ($unit) use ($file) {
+            fputcsv($file, [
+                $unit->code,
+                $unit->type,
+                $unit->floor,
+                $unit->bedrooms,
+                $unit->bathrooms,
+                $unit->rent_amount,
+                $unit->deposit_amount,
+                $unit->size_sq_m,
+                $unit->status,
+                $unit->notes,
+            ]);
+        });
+
+        fclose($file);
+    }, 200, [
+        'Content-Type'        => 'text/csv',
+        'Content-Disposition' => "attachment; filename={$fileName}",
+    ]);
+}
+
+public function importCsv(Request $request, Property $property)
+{
+    $request->validate([
+        'csv' => 'required|file|mimes:csv,txt',
+    ]);
+
+    $handle = fopen($request->file('csv')->getRealPath(), 'r');
+
+    $header = fgetcsv($handle); // skip header
+
+    while (($row = fgetcsv($handle)) !== false) {
+
+        [
+            $code,
+            $type,
+            $floor,
+            $bedrooms,
+            $bathrooms,
+            $rent,
+            $deposit,
+            $size,
+            $status,
+            $notes
+        ] = array_pad($row, 10, null);
+
+        Unit::updateOrCreate(
+            [
+                'property_id' => $property->id,
+                'code'        => trim($code),
+            ],
+            [
+                'type'           => $type ?: null,
+                'floor'          => $floor !== '' ? (int) $floor : null,
+                'bedrooms'       => $bedrooms !== '' ? (int) $bedrooms : null,
+                'bathrooms'      => $bathrooms !== '' ? (int) $bathrooms : null,
+                'rent_amount'    => $rent !== '' ? (float) $rent : null,
+                'deposit_amount' => $deposit !== '' ? (float) $deposit : null,
+                'size_sq_m'      => $size !== '' ? (float) $size : null,
+                'status'         => $status ?: 'available',
+                'notes'          => $notes ?: null,
+            ]
+        );
+    }
+
+    fclose($handle);
+
+    return back()->with('success', 'Units imported successfully.');
+}
+
 
 
     public function store(Request $request, Property $property)

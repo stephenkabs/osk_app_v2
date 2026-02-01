@@ -211,23 +211,42 @@
 <div class="container-fluid">
   <div class="col-lg-11 mx-auto">
 
-    {{-- Header --}}
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <div>
-        <div class="apple-title">Units</div>
-        <div class="apple-sub">{{ $property->property_name }}</div>
-      </div>
+{{-- Header --}}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <div class="apple-title">Units</div>
+    <div class="apple-sub">{{ $property->property_name }}</div>
+  </div>
 
-      <div class="d-flex gap-2">
-        <a href="{{ route('property.units.create', $property->slug) }}" class="af-btn">
-          <i class="fas fa-plus me-1"></i> Add Unit
-        </a>
+  <div class="d-flex gap-2 flex-wrap">
 
-        <a href="{{ route('property.users.index', $property->slug) }}" class="af-btn-outline">
-          <i class="fas fa-users me-1"></i> Tenants
-        </a>
-      </div>
-    </div>
+    {{-- ➕ Add Unit --}}
+    <a href="{{ route('property.units.create', $property->slug) }}" class="af-btn">
+      <i class="fas fa-plus me-1"></i> Add Unit
+    </a>
+
+    {{-- 📤 Export Units --}}
+    <a href="{{ route('property.units.export.csv', $property->slug) }}"
+       class="af-btn-outline">
+      <i class="fas fa-file-csv me-1"></i> Export
+    </a>
+
+    {{-- 📥 Import Units --}}
+    <button class="af-btn-outline"
+            data-bs-toggle="modal"
+            data-bs-target="#importUnitsModal">
+      <i class="fas fa-upload me-1"></i> Import
+    </button>
+
+    {{-- 👥 Tenants --}}
+    <a href="{{ route('property.users.index', $property->slug) }}"
+       class="af-btn-outline">
+      <i class="fas fa-users me-1"></i> Tenants
+    </a>
+
+  </div>
+</div>
+
 
     {{-- Filters --}}
     <div class="apple-card mb-3 p-3">
@@ -363,11 +382,51 @@
 
     {{-- Pagination --}}
     <div class="mt-4">
-      {{ $units->links() }}
+      {{-- {{ $units->links() }} --}}
+         {{ $units->links('pagination::bootstrap-5') }}
     </div>
 
   </div>
 </div>
+
+{{-- Import Units Modal --}}
+<div class="modal fade" id="importUnitsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form method="POST"
+          action="{{ route('property.units.import.csv', $property->slug) }}"
+          enctype="multipart/form-data"
+          class="modal-content">
+      @csrf
+
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Import Units</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <input type="file"
+               name="csv"
+               class="form-control"
+               accept=".csv"
+               required>
+
+        <small class="text-muted d-block mt-2">
+          Use the exported CSV format for best results.
+        </small>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="af-btn-outline" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <button type="submit" class="af-btn">
+          Import Units
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const skeleton = document.getElementById('units-skeleton');

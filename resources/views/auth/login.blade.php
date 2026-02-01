@@ -174,15 +174,15 @@
 
         <input type="email" name="email" placeholder="Email"
           class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium
-          placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#155012]/80 focus:border-[#155012]" required>
+          placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#155012]/80 focus:border-[#353535]" required>
 
         <input type="password" name="password" placeholder="Password"
           class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium
-          placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#155012]/80 focus:border-[#155012]" required>
+          placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#155012]/80 focus:border-[#353535]" required>
 
         <button id="submit-btn" type="submit"
-          class="w-full flex items-center justify-center gap-2 rounded-xl bg-[#097204] px-4 py-3 text-[15px] font-semibold text-white
-          hover:bg-[#0b5a08] transition disabled:opacity-60 disabled:cursor-not-allowed">
+          class="w-full flex items-center justify-center gap-2 rounded-xl bg-[#353535] px-4 py-3 text-[15px] font-semibold text-white
+          hover:bg-[#353535] transition disabled:opacity-60 disabled:cursor-not-allowed">
           <span id="btn-text">Login</span>
           <span id="loading-spinner" class="hidden h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
         </button>
@@ -195,7 +195,7 @@
     {{-- Forgot Password --}}
     @if (Route::has('password.request'))
         <a href="{{ route('password.request') }}"
-           class="font-medium text-[#155012] hover:text-[#0b5a08] transition">
+           class="font-medium text-[#353535] hover:text-[#191919] transition">
             Forgot password?
         </a>
     @endif
@@ -203,7 +203,7 @@
     {{-- Register --}}
     @if (Route::has('register'))
         <a href="{{ route('register') }}"
-           class="font-semibold text-[#155012] hover:text-[#0b5a08] transition">
+           class="font-semibold text-[#353535] hover:text-[#191919] transition">
             Don’t have an account?
             <span class="underline underline-offset-4">Register</span>
         </a>
