@@ -1,322 +1,183 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <title>Rent App • Property & Rental Management System</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OneSquareK</title>
 
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Bootstrap & Icons -->
-  <link href="/assets/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="shortcut icon" href="/assets/images/favicon.png">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
-  @include('ui.websites.styles')
+    <!-- Font Awesome (for install icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+    <!-- PWA Meta -->
+    {{-- @include('laravelpwa::meta', ['config' => config('laravelpwa.manifest')]) --}}
+
+    <style>
+        body {
+            background: linear-gradient(20deg, #2d2d2d, #111111);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        #preloader {
+            transition: opacity 0.4s ease;
+        }
+
+        .install-btn {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            background: #d8d8d8;
+            color: #242424;
+            border: none;
+            padding: 12px 22px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all .2s ease;
+        }
+
+        .install-btn:hover {
+            background: #16a34a;
+            transform: translateY(-1px);
+        }
+
+        .install-btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 
-<body>
+<body class="text-white min-h-screen flex flex-col items-center justify-center">
 
-<!-- Page Loader -->
-<div id="pageLoader" aria-hidden="true">
-  <div class="loader-wrap">
-    <div class="loader-ring"></div>
-  </div>
+<!-- PRELOADER -->
+<div id="preloader" class="fixed inset-0 z-50 flex items-center justify-center bg-white">
+    <div class="animate-spin rounded-full h-14 w-14 border-4 border-black border-t-transparent"></div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  setTimeout(() => {
-    const loader = document.getElementById('pageLoader');
-    if (!loader) return;
-    loader.classList.add('hidden');
-    setTimeout(() => loader.style.display = 'none', 550);
-  }, 300);
-});
-</script>
+<!-- MAIN CARD -->
+<div class="flex flex-col md:flex-row bg-black bg-opacity-40 max-w-4xl w-full mx-auto rounded-2xl overflow-hidden shadow-xl border border-white border-opacity-10">
 
-<header>
-  <div class="brand">
-    <img src="/logo.webp" alt="Rent App Logo" class="brand-logo">
-  </div>
-
-  <div class="nav-links d-none d-md-flex">
-    <a href="#hero">Home</a>
-    <a href="#about">About</a>
-    <a href="#services">Features</a>
-    <a href="#api">Developers</a>
-    <a href="#footer">Contact</a>
-
-    <a href="/login" class="nav-btn login-btn">Login</a>
-  </div>
-</header>
-
-<!-- HERO -->
-<section class="hero" id="hero">
-  <div class="hero-left-overlay"></div>
-
-  <div class="hero-content">
-    <h1>Rent App</h1>
-
-    <p>
-      A modern property & rental management platform designed for
-      <strong>landlords</strong>,
-      <strong>property managers</strong>, and
-      <strong>real estate businesses</strong>.
-      Manage properties, tenants, leases, and rent payments — all in one system.
-    </p>
-
-    <div class="hero-buttons">
-      <a href="/login" class="btn-primary">
-        <i class="fas fa-sign-in-alt me-1"></i> Sign In
-      </a>
-      <a href="/register" class="btn-outline">
-        <i class="fas fa-user-plus me-1"></i> Get Started
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- ABOUT -->
-<section class="about-section" id="about">
-  <div class="about-container">
-
-    <div class="about-text">
-      <span class="about-badge">About the Platform</span>
-      <h2>About Rent App</h2>
-
-      <p>
-        <strong>Rent App</strong> is a complete rental management system built to
-        handle the full property lifecycle — from onboarding properties and units,
-        managing tenants, signing leases, to tracking monthly rent and generating receipts.
-      </p>
-
-      <p>
-        The system gives landlords and property managers real-time visibility
-        into occupancy, rent status, lease agreements, and tenant activity,
-        while keeping everything secure and auditable.
-      </p>
-
-      <ul class="about-list">
-        <li><i class="fas fa-check-circle"></i> Property & unit management</li>
-        <li><i class="fas fa-check-circle"></i> Tenant onboarding & approval workflow</li>
-        <li><i class="fas fa-check-circle"></i> Digital lease agreements</li>
-        <li><i class="fas fa-check-circle"></i> Monthly rent tracking & receipts</li>
-        <li><i class="fas fa-check-circle"></i> Role-based access & audit logs</li>
-      </ul>
+    <!-- IMAGE -->
+    <div class="w-full md:w-1/2 h-56 md:h-auto">
+        <img src="/welcome/image.webp"
+             alt="OneSquareK Housing"
+             class="object-cover h-full w-full">
     </div>
 
-    <div class="about-visual">
-      <div class="about-card">
-        <div class="about-card-badge">
-          <i class="fas fa-building"></i> Smart Property Control
+    <!-- CONTENT -->
+    <div class="w-full md:w-1/2 flex flex-col justify-center p-6 md:p-10 bg-white text-gray-900 space-y-6">
+
+<img src="/welcome/logo.webp"
+     alt="OneSquareK Logo"
+     class="h-auto max-w-[140px] md:max-w-[180px] mx-auto md:mx-0">
+
+
+        <div class="space-y-3 text-center md:text-left">
+            <h1 class="text-xl md:text-2xl font-bold tracking-tight">
+                Compact Housing for Zambia’s Youth
+            </h1>
+
+            <p class="text-sm md:text-base text-gray-600 leading-relaxed">
+                Founded in <strong>2015</strong>, OneSquareK is a Lusaka-headquartered
+                property developer focused on the construction, ownership, and
+                operation of <strong>affordable compact housing solutions</strong>
+                for young people.
+            </p>
         </div>
-        <img src="/2.webp" alt="Rent App Dashboard">
-      </div>
-    </div>
 
-  </div>
-</section>
-
-<!-- FEATURES -->
-<section class="ms-features" id="services">
-  <div class="ms-features-inner">
-
-    <div class="ms-features-header">
-      <span class="section-badge">Core Features</span>
-      <h2>What Rent App Delivers</h2>
-
-      <p>
-        Everything you need to manage rental properties efficiently,
-        transparently, and professionally.
-      </p>
-    </div>
-
-    <div class="ms-feature-grid">
-
-      <div class="ms-feature-card">
-        <div class="ms-feature-icon"><i class="fas fa-building"></i></div>
-        <h5>Property & Unit Management</h5>
-        <p>
-          Create properties, define units, assign rent amounts, and
-          track availability across buildings.
-        </p>
-        <span class="ms-feature-chip">FOUNDATION</span>
-      </div>
-
-      <div class="ms-feature-card">
-        <div class="ms-feature-icon"><i class="fas fa-user-check"></i></div>
-        <h5>Tenant Registration & Approval</h5>
-        <p>
-          Tenants register and remain pending until approved by an admin
-          or landlord before accessing the system.
-        </p>
-        <span class="ms-feature-chip">CONTROLLED ACCESS</span>
-      </div>
-
-      <div class="ms-feature-card">
-        <div class="ms-feature-icon"><i class="fas fa-file-signature"></i></div>
-        <h5>Digital Lease Agreements</h5>
-        <p>
-          Create, sign, activate, and manage lease agreements
-          with status tracking (pending, active, ended).
-        </p>
-        <span class="ms-feature-chip">LEASES</span>
-      </div>
-
-      <div class="ms-feature-card">
-        <div class="ms-feature-icon"><i class="fas fa-calendar-alt"></i></div>
-        <h5>Rent Calendar (Jan–Dec)</h5>
-        <p>
-          Visual monthly rent calendar showing paid, partial,
-          and unpaid months for each tenant.
-        </p>
-        <span class="ms-feature-chip">VISUAL</span>
-      </div>
-
-      <div class="ms-feature-card">
-        <div class="ms-feature-icon"><i class="fas fa-money-bill-wave"></i></div>
-        <h5>Rent Payments & Partial Payments</h5>
-        <p>
-          Record rent payments per month with support for partial payments,
-          proration, and balance tracking.
-        </p>
-        <span class="ms-feature-chip">FLEXIBLE</span>
-      </div>
-
-      <div class="ms-feature-card">
-        <div class="ms-feature-icon"><i class="fas fa-file-pdf"></i></div>
-        <h5>PDF Receipts</h5>
-        <p>
-          Automatically generate downloadable PDF receipts
-          per tenant, per month.
-        </p>
-        <span class="ms-feature-chip">PROFESSIONAL</span>
-      </div>
-
-      <div class="ms-feature-card">
-        <div class="ms-feature-icon"><i class="fas fa-users-cog"></i></div>
-        <h5>Role-Based Access</h5>
-        <p>
-          Separate access for admins, landlords, tenants, and staff
-          with strict permission control.
-        </p>
-        <span class="ms-feature-chip">SECURE</span>
-      </div>
-
-      <div class="ms-feature-card">
-        <div class="ms-feature-icon"><i class="fas fa-shield-alt"></i></div>
-        <h5>Audit Logs & Security</h5>
-        <p>
-          Every action — approvals, payments, updates — is logged
-          with timestamps and user accountability.
-        </p>
-        <span class="ms-feature-chip">TRUSTED</span>
-      </div>
-
-    </div>
-
-  </div>
-</section>
-
-<!-- API -->
-<section class="api-section" id="api">
-  <div class="api-container">
-
-    <div class="api-text">
-      <span class="api-badge">For Developers</span>
-      <h2>APIs & Integrations</h2>
-
-      <p>
-        <strong>Rent App</strong> exposes secure APIs for integration with
-        mobile apps, payment gateways, accounting systems, and third-party tools.
-      </p>
-
-      <ul class="api-list">
-        <li><i class="fas fa-check-circle"></i> Tenant & lease management APIs</li>
-        <li><i class="fas fa-check-circle"></i> Rent payment posting endpoints</li>
-        <li><i class="fas fa-check-circle"></i> Token-based authentication</li>
-        <li><i class="fas fa-check-circle"></i> Receipt & reporting endpoints</li>
-      </ul>
-
-      <div class="api-actions">
-        <a href="/documentation" class="btn-dark">
-          <i class="fas fa-book me-1"></i> API Docs
+        <a href="{{ route('login', ['redirect_uri' => '/dashboard', 'state' => Str::random(32)]) }}"
+           class="w-full md:w-48 text-center bg-black text-white py-3 rounded-full text-sm font-semibold hover:bg-gray-900 transition">
+            Login to Platform
         </a>
-      </div>
+
     </div>
-
-    <div class="api-code">
-<pre><code><span class="comment">// Example: Record rent payment</span>
-POST /api/v1/rent-payments
-
-{
-  "tenant_id": 7,
-  "lease_id": 12,
-  "payment_month": "2026-01",
-  "amount": 950
-}
-
-<span class="comment">// Response</span>
-{
-  "status": "paid",
-  "receipt_id": "RNT-2026-0012"
-}
-</code></pre>
-    </div>
-
-  </div>
-</section>
+</div>
 
 <!-- FOOTER -->
-<footer class="ms-footer" id="footer">
-  <div class="ms-footer-container">
+<div class="text-center mt-10 max-w-xl px-6 space-y-4">
 
-    <div class="ms-footer-brand">
-      <img src="/logo_white.webp" alt="Rent App Logo">
-      <p>
-        <strong>Rent App</strong> is a modern rental management platform
-        built to simplify property operations, tenant management,
-        and rent tracking.
-      </p>
+    <h2 class="text-sm md:text-base font-semibold tracking-wide">
+        OneSquareK Cloud Investment & Tenant Platform
+    </h2>
+
+    <p class="text-xs md:text-sm text-gray-300 leading-relaxed">
+        OneSquareK (OSK) addresses the growing need for
+        <strong>high-quality yet affordable accommodation</strong>
+        for thousands of young people living and working in Lusaka.
+    </p>
+
+    <div class="flex justify-center">
+        <button id="installAppBtn" class="install-btn">
+            <i class="fa-solid fa-download"></i> Install App
+        </button>
     </div>
 
-    <div class="ms-footer-links">
-      <h4>Platform</h4>
-      <a href="/">Home</a>
-      <a href="#about">About</a>
-      <a href="#services">Features</a>
-      <a href="#api">Developers</a>
-    </div>
+    <hr class="my-4 border-white border-opacity-20">
 
-    <div class="ms-footer-links">
-      <h4>Resources</h4>
-      <a href="/documentation">Documentation</a>
-      <a href="/login">Login</a>
-      <a href="/register">Get Started</a>
-    </div>
+    <p class="text-[10px] font-medium text-gray-400">
+        Powered by OneSquareK Properties · Version 1.0.0
+    </p>
+</div>
 
-    <div class="ms-footer-links">
-      <h4>Contact</h4>
-      <div class="ms-footer-contact">
-        <i class="fas fa-envelope"></i>
-        <span>support@neurasofts.com</span>
-      </div>
-      <div class="ms-footer-contact">
-        <i class="fas fa-phone"></i>
-        <span>+260 773 360 664</span>
-      </div>
-      <div class="ms-footer-contact">
-        <i class="fas fa-map-marker-alt"></i>
-        <span>Lusaka, Zambia</span>
-      </div>
-    </div>
+<!-- PRELOADER SCRIPT -->
+<script>
+    window.addEventListener('load', () => {
+        const preloader = document.getElementById('preloader');
+        setTimeout(() => {
+            preloader.style.opacity = '0';
+            setTimeout(() => preloader.style.display = 'none', 400);
+        }, 1200);
+    });
+</script>
 
-  </div>
+<!-- PWA INSTALL SCRIPT -->
+<script>
+    let deferredPrompt;
+    const installBtn = document.getElementById('installAppBtn');
+    installBtn.style.display = 'none';
 
-  <div class="ms-footer-bottom">
-    © {{ now()->year }} Rent App • Built by Neurasoft Technologies Inc.
-  </div>
-</footer>
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-<script src="/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+    if (isSafari) {
+        installBtn.style.display = 'inline-flex';
+        installBtn.innerHTML = "<i class='fa-solid fa-plus'></i> Add to Home Screen";
+
+        installBtn.addEventListener('click', () => {
+            alert(
+                "To install this app:\n\n" +
+                "1. Tap the Share button (⬆️)\n" +
+                "2. Select 'Add to Home Screen'"
+            );
+        });
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = 'inline-flex';
+
+        installBtn.addEventListener('click', async () => {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+
+            if (outcome === 'accepted') {
+                installBtn.innerHTML = "<i class='fa-solid fa-check'></i> Installed";
+                installBtn.disabled = true;
+            }
+
+            deferredPrompt = null;
+        });
+    });
+
+    window.addEventListener('appinstalled', () => {
+        installBtn.innerHTML = "<i class='fa-solid fa-check'></i> Installed";
+        installBtn.disabled = true;
+    });
+</script>
+
 </body>
 </html>

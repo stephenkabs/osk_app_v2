@@ -1,4 +1,4 @@
-landlord
+
 
 @extends('layouts.app')
 
@@ -227,7 +227,7 @@ landlord
 
     {{-- EXPENSES --}}
 {{-- EXPENSES --}}
-<a href="{{ route('property.expenses.index', $property->slug) }}" class="settings-card">
+{{-- <a href="{{ route('property.expenses.index', $property->slug) }}" class="settings-card">
     <div class="settings-icon bg-red">
         <i class="fas fa-receipt"></i>
     </div>
@@ -235,6 +235,23 @@ landlord
     <div class="settings-desc">
         Track operational and property-related expenses
     </div>
+</a> --}}
+{{-- RENT SUMMARY --}}
+<a href="{{ route('property.rent.summary', $property->slug) }}"
+   class="settings-card">
+
+  <div class="settings-icon bg-indigo">
+    <i class="fas fa-chart-line"></i>
+  </div>
+
+  <div class="settings-title">
+    Rent Summary
+  </div>
+
+  <div class="settings-desc">
+    View monthly rent, payments, balances & empty units
+  </div>
+
 </a>
 
 
@@ -248,7 +265,23 @@ landlord
         View financial, occupancy and performance reports
     </div>
 </a>
+@if(isset($property))
+  {{-- ASSIGN LEASE --}}
+  <a href="{{ route('property.lease.assign.board', $property->slug) }}"
+     class="settings-card">
 
+    <div class="settings-icon bg-green">
+      <i class="fas fa-random"></i>
+    </div>
+
+    <div class="settings-title">Assign Lease</div>
+
+    <div class="settings-desc">
+      Drag tenants into available units and generate lease links
+    </div>
+
+  </a>
+@endif
 
 </div>
 </div>

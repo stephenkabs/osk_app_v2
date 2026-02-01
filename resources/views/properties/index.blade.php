@@ -238,6 +238,22 @@
 /* Width helpers */
 .w-40 { width: 40%; }
 .w-60 { width: 60%; }
+.no-image-icon {
+    width: 100%;
+    height: 180px;
+    background: linear-gradient(180deg, #f8fafc, #eef2f7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-size: 46px;
+}
+
+.property-card:hover .no-image-icon i {
+    transform: scale(1.05);
+    color: #4b5563;
+    transition: all .25s ease;
+}
 
     </style>
 @endpush
@@ -293,18 +309,24 @@
                    class="text-decoration-none text-dark">
 
                     <div class="property-card">
+{{-- IMAGE --}}
+<div class="property-media d-flex align-items-center justify-content-center">
 
-                        {{-- IMAGE --}}
-                        <div class="property-media">
-                            @if(count($imgs))
-                                <img src="{{ asset('storage/'.$imgs[0]) }}"
-                                     class="property-img"
-                                     onerror="this.src='{{ asset('assets/images/placeholder.jpg') }}'">
-                            @else
-                                <img src="{{ asset('assets/images/placeholder.jpg') }}"
-                                     class="property-img">
-                            @endif
-                        </div>
+    @if(count($imgs))
+        <img src="{{ asset('storage/'.$imgs[0]) }}"
+             class="property-img"
+             onerror="this.onerror=null;this.closest('.property-media').innerHTML = `
+                <div class='no-image-icon'>
+                    <i class='fas fa-building'></i>
+                </div>
+             `;">
+    @else
+        <div class="no-image-icon">
+            <i class="fas fa-building"></i>
+        </div>
+    @endif
+
+</div>
 
                         {{-- BODY --}}
                         <div class="property-body">

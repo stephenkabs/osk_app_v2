@@ -2,11 +2,11 @@
 <!-- ========== Left Sidebar Start ========== -->
 <style>
   :root {
-    --sb-bg: #003366;            /* deep blue background */
-    --sb-hover-bg: #072442;      /* green hover */
+    --sb-bg: #2e2e2e;            /* deep blue background */
+    --sb-hover-bg: #3d3d3d;      /* green hover */
     --sb-text: #ffffff;          /* white text */
-    --sb-icon: #00ff99;          /* bright green icons */
-    --sb-border: #00264d;        /* dark blue border */
+    --sb-icon: #ffc400;          /* bright green icons */
+    --sb-border: #303030;        /* dark blue border */
   }
 
   .vertical-menu {

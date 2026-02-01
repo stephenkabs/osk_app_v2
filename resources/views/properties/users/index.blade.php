@@ -3,160 +3,222 @@
 @section('content')
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap');
+
 :root {
-  --ink:#0b0c0f;
+  --black:#0b0c0f;
+  --yellow:#e1a422;
+  --yellow-soft:#f7e7b0;
   --muted:#6b7280;
   --card:#ffffff;
   --border:#e5e7eb;
-  --radius:16px;
+  --radius:18px;
 }
 
-/* Header */
+body {
+  font-family: Inter, -apple-system, BlinkMacSystemFont,
+               "SF Pro Text", "SF Pro Display",
+               "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color:var(--black);
+}
+
+/* ===============================
+   HEADER
+================================ */
 .apple-header {
-  background:var(--card);
+  background:linear-gradient(180deg,#fff,#fcfcfd);
   border:1px solid var(--border);
   border-radius:var(--radius);
-  padding:18px 22px;
+  padding:20px 24px;
   display:flex;
   justify-content:space-between;
   align-items:center;
   gap:16px;
-  box-shadow:0 4px 14px rgba(0,0,0,.04);
-}
-.apple-title {
-  font-weight:800;
-  font-size:20px;
-  letter-spacing:-.02em;
-}
-.apple-sub {
-  font-size:12px;
-  font-weight:600;
-  color:var(--muted);
-  text-transform:uppercase;
+  box-shadow:0 8px 30px rgba(0,0,0,.05);
 }
 
-/* Buttons */
-.af-btn, .af-btn-outline {
-  border-radius:12px;
-  padding:8px 14px;
-  font-weight:700;
+.apple-title {
+  font-weight:900;
+  font-size:22px;
+  letter-spacing:-.03em;
+  color:var(--black);
+}
+
+.apple-sub {
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--yellow);
+}
+
+/* ===============================
+   BUTTONS
+================================ */
+.af-btn,
+.af-btn-outline {
+  border-radius:14px;
+  padding:9px 16px;
+  font-weight:800;
   font-size:13px;
   display:inline-flex;
   align-items:center;
   gap:8px;
-  transition:.2s;
+  transition:.25s cubic-bezier(.4,0,.2,1);
   text-decoration:none;
+  white-space:nowrap;
 }
-.af-btn {
-  background:var(--ink);
-  color:#fff;
-}
-.af-btn:hover { background:#000; transform:translateY(-1px); }
 
+/* Primary */
+.af-btn {
+  background:linear-gradient(180deg,var(--black),#000);
+  color:#fff;
+  box-shadow:0 6px 18px rgba(0,0,0,.25);
+}
+
+.af-btn i { color:var(--yellow); }
+
+.af-btn:hover {
+  transform:translateY(-2px);
+  box-shadow:0 12px 28px rgba(0,0,0,.35);
+}
+
+/* Outline */
 .af-btn-outline {
   background:#fff;
-  border:1px solid var(--border);
-  color:var(--ink);
+  border:1.5px solid var(--border);
+  color:var(--black);
 }
-.af-btn-outline:hover { background:#f3f4f6; }
 
-/* Cards */
+.af-btn-outline i {
+  color:var(--yellow);
+}
+
+.af-btn-outline:hover {
+  background:#fffbea;
+  border-color:var(--yellow);
+  transform:translateY(-1px);
+}
+
+/* ===============================
+   CARDS
+================================ */
 .apple-card {
-  background:var(--card);
+  background:#fff;
   border:1px solid var(--border);
   border-radius:var(--radius);
   padding:16px;
-  box-shadow:0 2px 6px rgba(0,0,0,.05);
+  box-shadow:0 4px 14px rgba(0,0,0,.05);
 }
 
-/* Tenant grid */
+/* ===============================
+   TENANT GRID
+================================ */
 .member-grid {
   display:grid;
-  gap:18px;
+  gap:20px;
   grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
 }
+
 .member-card {
   background:#fff;
   border:1px solid var(--border);
-  border-radius:16px;
-  padding:14px;
+  border-radius:18px;
+  padding:14px 16px;
   display:flex;
   gap:14px;
   align-items:center;
-  transition:.25s;
+  transition:.3s cubic-bezier(.4,0,.2,1);
 }
+
 .member-card:hover {
-  transform:translateY(-2px);
-  box-shadow:0 10px 24px rgba(0,0,0,.08);
+  transform:translateY(-3px);
+  border-color:var(--yellow);
+  box-shadow:0 20px 40px rgba(0,0,0,.12);
 }
-.member-img,.member-placeholder {
-  width:56px;height:56px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-weight:700;font-size:18px;
-  background:#6b7280;color:#fff;
+
+/* Avatar */
+.member-img,
+.member-placeholder {
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  font-size:18px;
+  background:linear-gradient(180deg,var(--yellow),#c79218);
+  color:#000;
 }
+
+/* Info */
 .member-info h5 {
   font-size:15px;
-  font-weight:700;
+  font-weight:900;
+  letter-spacing:-.02em;
   margin:0;
+  color:var(--black);
 }
+
 .member-info p {
-  font-size:11px;
+  font-size:12px;
+  font-weight:600;
   color:var(--muted);
   margin:2px 0 0;
 }
 
-/* Copy feedback */
+/* ===============================
+   COPY FEEDBACK
+================================ */
 .copied {
-  background:#e0f2fe!important;
-  border-color:#93c5fd!important;
-  color:#0369a1!important;
+  background:#fff7d6!important;
+  border-color:var(--yellow)!important;
+  color:#7a5a00!important;
 }
 
 /* ===============================
-   Apple-like Skeleton Loader
+   APPLE-LIKE SKELETON
 ================================ */
-
 .skeleton {
-  position: relative;
-  overflow: hidden;
-  background: #e5e7eb;
-  border-radius: 12px;
+  position:relative;
+  overflow:hidden;
+  background:#e5e7eb;
+  border-radius:14px;
 }
 
 .skeleton::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  transform: translateX(-100%);
-  background: linear-gradient(
+  content:"";
+  position:absolute;
+  inset:0;
+  transform:translateX(-100%);
+  background:linear-gradient(
     90deg,
     transparent,
-    rgba(255,255,255,.6),
+    rgba(255,255,255,.7),
     transparent
   );
-  animation: shimmer 1.4s infinite;
+  animation:shimmer 1.4s infinite;
 }
 
 @keyframes shimmer {
-  100% { transform: translateX(100%); }
+  100% { transform:translateX(100%); }
 }
 
-/* Sizes */
 .skeleton-circle {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
+  width:56px;
+  height:56px;
+  border-radius:50%;
 }
 
 .skeleton-line {
-  height: 12px;
-  border-radius: 6px;
+  height:12px;
+  border-radius:8px;
 }
 
-.skeleton-line.sm { width: 40%; }
-.skeleton-line.md { width: 65%; }
-.skeleton-line.lg { width: 85%; }
+.skeleton-line.sm { width:40%; }
+.skeleton-line.md { width:65%; }
+.skeleton-line.lg { width:85%; }
 
 </style>
 

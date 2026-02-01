@@ -31,6 +31,8 @@ class User extends Authenticatable
         'occupation',
         'type',
         'profile_image',
+        'kyc_status',
+        'quickbooks_customer_id',
     ];
 
     /**
@@ -104,11 +106,24 @@ public function properties()
 
   public function leaseAgreements()
     {
+
         return $this->hasMany(\App\Models\PropertyLeaseAgreement::class, 'user_id');
+    }
+
+
+        public function agreements()
+    {
+        return $this->hasMany(PropertyLeaseAgreement::class);
     }
 public function unit()
 {
     return $this->belongsTo(\App\Models\Unit::class);
+}
+
+
+public function leases()
+{
+    return $this->hasMany(PropertyLeaseAgreement::class, 'user_id');
 }
 
 
@@ -128,4 +143,11 @@ public function unit()
     {
         return !empty($this->profile_image);
     }
+
+    // App\Models\User.php
+public function partner()
+{
+    return $this->hasOne(\App\Models\Partner::class);
+}
+
 }

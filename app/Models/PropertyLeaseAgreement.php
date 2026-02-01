@@ -41,4 +41,13 @@ protected $fillable = [
     return $this->hasMany(PropertyPayment::class, 'lease_agreement_id');
 }
 
+
+public function user()
+{
+    return $this->belongsTo(User::class);
+}
+
+
+
+
 }

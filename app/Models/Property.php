@@ -141,6 +141,31 @@ public function getRemainingSharesAttribute(): int
     }
 
 
+public function leaseTemplate()
+{
+    return $this->hasOne(LeaseTemplate::class);
+}
+
+
+public function investments()
+{
+    return $this->hasMany(\App\Models\Investment::class);
+}
+
+public function confirmedShares(): int
+{
+    return (int) $this->investments()
+        ->where('status', 'confirmed')
+        ->sum('shares');
+}
+
+public function availableShares(): int
+{
+    return max(0, (int)$this->qbo_qty_on_hand - $this->confirmedShares());
+}
+
+
+
 
 // 👇 ADD THIS
 // public function payments()

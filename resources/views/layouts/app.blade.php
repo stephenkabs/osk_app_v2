@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>{{ $title ?? 'Rent App' }}</title>
+    <title>{{ $title ?? 'OSK App' }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="shortcut icon" href="/assets/images/favicon.png">

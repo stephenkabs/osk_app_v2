@@ -60,7 +60,7 @@
     left: 0;
     height: 3px;
     width: 0%;
-    background: linear-gradient(90deg, #00a6ff, #043a5e);
+    background: linear-gradient(90deg, #ffa600, #5e3704);
     z-index: 9999;
     transition: width 0.25s ease;
 }

@@ -7,6 +7,8 @@ use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use App\Models\Unit;
+use Illuminate\Validation\Rule;
+use Spatie\Permission\Models\Role;
 use App\Models\PropertyLeaseAgreement;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
@@ -97,26 +99,210 @@ public function store(Request $request, Property $property)
 }
 
 
-// PropertyLeaseAgreementController@publicCreate
-public function publicCreate(Request $request, Property $property)
-{
-    $userId = $request->query('user');        // <-- read from query
-    $user   = $userId ? \App\Models\User::find($userId) : null;
 
-    if (!$user) {
-        // Optional: send them back to the public tenant form
-        return redirect()
-            ->route('property.users.public.create', $property->slug)
-            ->with('error', 'Tenant not found. Please register first.');
+public function assignFromBoard(Request $request, Property $property)
+{
+    // 👇 DEBUG SAFETY (remove later)
+    // logger($request->all());
+
+    $data = $request->validate([
+        'user_id' => [
+            'required',
+            Rule::exists('users', 'id')->where(
+                fn ($q) => $q->where('property_id', $property->id)
+            ),
+        ],
+        'unit_id' => [
+            'required',
+            Rule::exists('units', 'id')->where(
+                fn ($q) => $q->where('property_id', $property->id)
+            ),
+        ],
+        'start_date' => ['required', 'date'],
+    ]);
+
+    // ❌ Prevent duplicate active/pending lease
+    if (
+        PropertyLeaseAgreement::where('property_id', $property->id)
+            ->where('user_id', $data['user_id'])
+            ->whereIn('status', ['pending', 'active'])
+            ->exists()
+    ) {
+        return response()->json([
+            'error' => 'Tenant already has an active or pending lease.'
+        ], 422);
     }
 
-    $units = \App\Models\Unit::where('property_id', $property->id)
+    // 🔒 TRANSACTION (VERY IMPORTANT)
+    $lease = DB::transaction(function () use ($data, $property) {
+
+        // Lock unit row
+        $unit = Unit::where('id', $data['unit_id'])
+            ->where('property_id', $property->id)
+            ->lockForUpdate()
+            ->first();
+
+        if (!$unit) {
+            abort(422, 'Unit not found.');
+        }
+
+        if ($unit->status !== 'available') {
+            abort(422, 'This unit is no longer available.');
+        }
+
+        // Reserve unit
+        $unit->update(['status' => 'reserved']);
+
+        // Create lease
+return PropertyLeaseAgreement::create([
+    'property_id'     => $property->id,
+    'user_id'         => $data['user_id'],
+    'unit_id'         => $unit->id,
+    'start_date'      => $data['start_date'],
+    'rent_amount'     => $unit->rent_amount,        // ✅ REQUIRED
+    'deposit_amount' => $unit->deposit_amount ?? 0, // ✅ SAFE
+    'status'          => 'pending',
+    'slug'            => (string) Str::uuid(),
+]);
+
+    });
+
+    return response()->json([
+        'success'  => true,
+        'lease_id' => $lease->id,
+'sign_url' => route(
+    'property.agreements.public.create',
+    $property->slug
+) . '?lease=' . $lease->slug,
+
+    ]);
+}
+
+public function assignBoard(Property $property)
+{
+    $tenants = User::where('property_id', $property->id)
+        ->with([
+            'leases' => function ($q) use ($property) {
+                $q->where('property_id', $property->id)
+                  ->whereIn('status', ['pending', 'active'])
+                  ->with('unit');
+            }
+        ])
+        ->orderBy('name')
+        ->get();
+
+    $units = Unit::where('property_id', $property->id)
         ->where('status', 'available')
         ->orderBy('code')
         ->get();
 
-    return view('properties.agreements.public_create', compact('property','user','units'));
+    return view(
+        'properties.agreements.assign-board',
+        compact('property', 'tenants', 'units')
+    );
 }
+
+
+
+
+
+
+public function assignAndGenerateLink(
+    Request $request,
+    Property $property,
+    User $user
+) {
+    // 🔒 Always return JSON (prevents HTML responses)
+    $request->headers->set('Accept', 'application/json');
+
+    // ✅ Validate input (unit must belong to property)
+    $data = $request->validate([
+        'unit_id' => [
+            'required',
+            Rule::exists('units', 'id')->where(
+                fn ($q) => $q->where('property_id', $property->id)
+            ),
+        ],
+        'start_date' => ['required', 'date'],
+    ]);
+
+    // ❌ Prevent duplicate active/pending lease
+    if (
+        PropertyLeaseAgreement::where('property_id', $property->id)
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['pending', 'active'])
+            ->exists()
+    ) {
+        return response()->json([
+            'error' => 'Tenant already has an active or pending lease.'
+        ], 422);
+    }
+
+    // 🔒 Transaction = no double booking
+    $lease = DB::transaction(function () use ($data, $property, $user) {
+
+        /** @var Unit $unit */
+        $unit = Unit::where('id', $data['unit_id'])
+            ->where('property_id', $property->id)
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        if ($unit->status !== 'available') {
+            abort(422, 'Selected unit is no longer available.');
+        }
+
+        // Reserve unit
+        $unit->update(['status' => 'reserved']);
+
+        // Create lease
+        return PropertyLeaseAgreement::create([
+            'property_id' => $property->id,
+            'user_id'     => $user->id,
+            'unit_id'     => $unit->id,
+            'start_date'  => $data['start_date'],
+            'status'      => 'pending',
+            'slug'        => (string) Str::uuid(),
+        ]);
+    });
+
+    // ✅ Return SIGNING LINK (this is what your JS needs)
+    return response()->json([
+        'success'  => true,
+        'lease_id' => $lease->id,
+        'sign_url' => route(
+            'property.agreements.public.create',
+            $property->slug
+        ) . '?user=' . $user->id,
+    ]);
+}
+
+
+
+public function publicCreate(Request $request, Property $property)
+{
+    $lease = null;
+
+    if ($request->filled('lease')) {
+        $lease = PropertyLeaseAgreement::where('slug', $request->lease)
+            ->where('property_id', $property->id)
+            ->with('unit','tenant')
+            ->firstOrFail();
+    }
+
+    $user = $lease?->tenant;
+
+    $units = Unit::where('property_id', $property->id)
+        ->where('status', 'available')
+        ->orderBy('code')
+        ->get();
+
+    return view(
+        'properties.agreements.public_create',
+        compact('property','user','units','lease')
+    );
+}
+
+
 
 private function imageToDataUri(?string $storagePath): ?string
 {
@@ -210,8 +396,144 @@ public function download(Property $property, PropertyLeaseAgreement $agreement)
 
 
 
+// public function publicStore(Request $request, Property $property)
+// {
+//     $data = $request->validate([
+//         'name'           => ['required','string','max:190'],
+//         'email'          => ['required','email'],
+//         'unit_id'        => ['nullable','exists:units,id'],
+//         'start_date'     => ['required','date'],
+//         'end_date'       => ['nullable','date','after_or_equal:start_date'],
+//         'rent_amount'    => ['required','numeric','min:0'],
+//         'deposit_amount' => ['nullable','numeric','min:0'],
+//         'notes'          => ['nullable','string','max:2000'],
+//         'agree_terms'    => ['accepted'],
+//         'signature_data' => ['required','string'],
+//     ]);
+
+//     // Reuse/create tenant
+//     $user = User::firstOrCreate(
+//         ['email' => $data['email']],
+//         ['name' => $data['name'], 'property_id' => $property->id]
+//     );
+
+//     // Prepare agreement payload
+//     $payload = [
+//         'user_id'         => $user->id,
+//         'property_id'     => $property->id,
+//         'unit_id'         => $data['unit_id'] ?? null,
+//         'start_date'      => $data['start_date'],
+//         'end_date'        => $data['end_date'] ?? null,
+//         'rent_amount'     => $data['rent_amount'],
+//         'deposit_amount'  => $data['deposit_amount'] ?? null,
+//         'notes'           => $data['notes'] ?? null,
+//         'status'          => 'pending',
+//         'slug'            => \Illuminate\Support\Str::slug('lease-'.\Illuminate\Support\Str::random(6)),
+//             // ✅ FREEZE TERMS
+//     'terms_snapshot' => $property->leaseTemplate->terms,
+//         'signed_at'       => now(),
+//     ];
+
+//     // Save signature image (base64 -> storage)
+//     $sig = $data['signature_data'];
+//     if (str_starts_with($sig, 'data:image/png;base64,')) {
+//         $sig = substr($sig, strpos($sig, ',') + 1);
+//     }
+//     $sigBinary = base64_decode($sig, true);
+//     if ($sigBinary === false) {
+//         return back()->withErrors(['signature_data' => 'Invalid signature data.'])->withInput();
+//     }
+//     $sigPath = 'agreements/signatures/'.uniqid('sig_').'.png';
+//     Storage::disk('public')->put($sigPath, $sigBinary);
+//     $payload['tenant_signature_path'] = $sigPath;
+
+//     // 🔒 Transaction so we don't double-book units
+//     $agreement = DB::transaction(function () use ($payload, $data, $property) {
+
+//         // If a unit was selected, lock it and ensure it's available & same property
+//         if (!empty($data['unit_id'])) {
+//             /** @var \App\Models\Unit|null $unit */
+//             $unit = Unit::where('id', $data['unit_id'])
+//                 ->where('property_id', $property->id)
+//                 ->lockForUpdate() // row lock until transaction ends
+//                 ->first();
+
+//             if (!$unit) {
+//                 abort(422, 'Selected unit not found for this property.');
+//             }
+//             if ($unit->status !== 'available') {
+//                 abort(422, 'Sorry, that unit has just been taken. Please choose another one.');
+//             }
+
+//             // Mark as occupied now
+//             $unit->update(['status' => 'occupied']);
+//         }
+
+//         // Create agreement after unit is reserved
+//         return \App\Models\PropertyLeaseAgreement::create($payload);
+//     });
+
+//     return redirect()
+//         ->route('property.agreements.pdf', [$property->slug, $agreement->slug])
+//         ->with('success', 'Lease application submitted successfully.');
+// }
+
+
 public function publicStore(Request $request, Property $property)
 {
+    // ===============================
+    // 🔍 CASE 1: ADMIN-ASSIGNED LEASE
+    // ===============================
+    if ($request->filled('lease_id')) {
+
+        $lease = PropertyLeaseAgreement::where('id', $request->lease_id)
+            ->where('property_id', $property->id)
+            ->where('status', 'pending')
+            ->with('unit')
+            ->firstOrFail();
+
+        $data = $request->validate([
+            'signature_data' => ['required','string'],
+            'agree_terms'    => ['accepted'],
+        ]);
+
+        // Save signature image
+        $sig = $data['signature_data'];
+        if (str_starts_with($sig, 'data:image/png;base64,')) {
+            $sig = substr($sig, strpos($sig, ',') + 1);
+        }
+
+        $sigBinary = base64_decode($sig, true);
+        if ($sigBinary === false) {
+            return back()->withErrors(['signature_data' => 'Invalid signature data.']);
+        }
+
+        $sigPath = 'agreements/signatures/'.uniqid('sig_').'.png';
+        Storage::disk('public')->put($sigPath, $sigBinary);
+
+        DB::transaction(function () use ($lease, $sigPath) {
+
+            // Activate lease
+            $lease->update([
+                'tenant_signature_path' => $sigPath,
+                'signed_at'             => now(),
+                'status'                => 'active',
+            ]);
+
+            // Occupy unit
+            if ($lease->unit) {
+                $lease->unit->update(['status' => 'occupied']);
+            }
+        });
+
+        return redirect()
+            ->route('property.agreements.pdf', [$property->slug, $lease->slug])
+            ->with('success', 'Lease signed successfully.');
+    }
+
+    // ===============================
+    // 🧾 CASE 2: PUBLIC SELF-APPLY
+    // ===============================
     $data = $request->validate([
         'name'           => ['required','string','max:190'],
         'email'          => ['required','email'],
@@ -231,60 +553,51 @@ public function publicStore(Request $request, Property $property)
         ['name' => $data['name'], 'property_id' => $property->id]
     );
 
-    // Prepare agreement payload
-    $payload = [
-        'user_id'         => $user->id,
-        'property_id'     => $property->id,
-        'unit_id'         => $data['unit_id'] ?? null,
-        'start_date'      => $data['start_date'],
-        'end_date'        => $data['end_date'] ?? null,
-        'rent_amount'     => $data['rent_amount'],
-        'deposit_amount'  => $data['deposit_amount'] ?? null,
-        'notes'           => $data['notes'] ?? null,
-        'status'          => 'pending',
-        'slug'            => \Illuminate\Support\Str::slug('lease-'.\Illuminate\Support\Str::random(6)),
-            // ✅ FREEZE TERMS
-    'terms_snapshot' => $property->leaseTemplate->terms,
-        'signed_at'       => now(),
-    ];
-
-    // Save signature image (base64 -> storage)
+    // Save signature
     $sig = $data['signature_data'];
     if (str_starts_with($sig, 'data:image/png;base64,')) {
         $sig = substr($sig, strpos($sig, ',') + 1);
     }
+
     $sigBinary = base64_decode($sig, true);
     if ($sigBinary === false) {
-        return back()->withErrors(['signature_data' => 'Invalid signature data.'])->withInput();
+        return back()->withErrors(['signature_data' => 'Invalid signature data.']);
     }
+
     $sigPath = 'agreements/signatures/'.uniqid('sig_').'.png';
     Storage::disk('public')->put($sigPath, $sigBinary);
-    $payload['tenant_signature_path'] = $sigPath;
 
-    // 🔒 Transaction so we don't double-book units
-    $agreement = DB::transaction(function () use ($payload, $data, $property) {
+    // Create lease
+    $agreement = DB::transaction(function () use ($data, $property, $user, $sigPath) {
 
-        // If a unit was selected, lock it and ensure it's available & same property
         if (!empty($data['unit_id'])) {
-            /** @var \App\Models\Unit|null $unit */
             $unit = Unit::where('id', $data['unit_id'])
                 ->where('property_id', $property->id)
-                ->lockForUpdate() // row lock until transaction ends
-                ->first();
+                ->lockForUpdate()
+                ->firstOrFail();
 
-            if (!$unit) {
-                abort(422, 'Selected unit not found for this property.');
-            }
             if ($unit->status !== 'available') {
-                abort(422, 'Sorry, that unit has just been taken. Please choose another one.');
+                abort(422, 'Unit no longer available.');
             }
 
-            // Mark as occupied now
             $unit->update(['status' => 'occupied']);
         }
 
-        // Create agreement after unit is reserved
-        return \App\Models\PropertyLeaseAgreement::create($payload);
+        return PropertyLeaseAgreement::create([
+            'user_id'                => $user->id,
+            'property_id'            => $property->id,
+            'unit_id'                => $data['unit_id'] ?? null,
+            'start_date'             => $data['start_date'],
+            'end_date'               => $data['end_date'] ?? null,
+            'rent_amount'            => $data['rent_amount'],
+            'deposit_amount'         => $data['deposit_amount'] ?? null,
+            'notes'                  => $data['notes'] ?? null,
+            'tenant_signature_path'  => $sigPath,
+            'status'                 => 'active',
+            'signed_at'              => now(),
+            'slug'                   => Str::uuid(),
+            'terms_snapshot'         => $property->leaseTemplate->terms,
+        ]);
     });
 
     return redirect()
@@ -293,7 +606,8 @@ public function publicStore(Request $request, Property $property)
 }
 
 
-    public function show(Property $property, PropertyLeaseAgreement $agreement)
+
+public function show(Property $property, PropertyLeaseAgreement $agreement)
     {
         $agreement->load(['tenant','unit','property']);
         return view('properties.agreements.show', compact('property','agreement'));

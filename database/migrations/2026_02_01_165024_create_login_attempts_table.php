@@ -11,10 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('payments', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+Schema::create('login_attempts', function (Blueprint $table) {
+    $table->id();
+    $table->string('email')->nullable();
+    $table->string('ip_address')->nullable();
+    $table->string('user_agent')->nullable();
+    $table->string('reason')->nullable();
+    $table->timestamps();
+});
+
     }
 
     /**
@@ -22,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('payments');
+        Schema::dropIfExists('login_attempts');
     }
 };

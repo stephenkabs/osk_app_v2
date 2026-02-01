@@ -89,6 +89,10 @@
       {{-- ✅ LEASE FORM --}}
       <form action="{{ route('property.agreements.public.store', $property->slug) }}" method="POST">
         @csrf
+        @if(isset($lease))
+  <input type="hidden" name="lease_id" value="{{ $lease->id }}">
+@endif
+
 
         @if ($errors->any())
           <div class="alert alert-danger">
@@ -125,41 +129,79 @@
     readonly>
 </div>
 
+{{-- UNIT --}}
+<div class="col-md-6">
+  <label>Unit</label>
 
-          {{-- UNIT --}}
-          <div class="col-md-6">
-            <label>Unit</label>
-            <select name="unit_id" id="unitSelect" class="af-select" required>
-              <option value="">-- Select Unit --</option>
-              @foreach($units as $unit)
-                <option value="{{ $unit->id }}"
-                        data-rent="{{ $unit->rent_amount }}"
-                        data-deposit="{{ $unit->deposit_amount }}">
-                  {{ $unit->code }}
-                </option>
-              @endforeach
-            </select>
-          </div>
+  @if(isset($lease))
+    {{-- LOCKED (ADMIN ASSIGNED) --}}
+    <input type="text"
+           class="af-input"
+           value="{{ $lease->unit->code }}"
+           readonly>
 
-          {{-- START DATE --}}
-          <div class="col-md-6">
-            <label>Start Date</label>
-            <input type="date" name="start_date" class="af-input" required>
-          </div>
+    <input type="hidden"
+           name="unit_id"
+           value="{{ $lease->unit_id }}">
+  @else
+    {{-- SELECTABLE (SELF APPLY) --}}
+    <select name="unit_id" id="unitSelect" class="af-select" required>
+      <option value="">-- Select Unit --</option>
+      @foreach($units as $unit)
+        <option value="{{ $unit->id }}"
+                data-rent="{{ $unit->rent_amount }}"
+                data-deposit="{{ $unit->deposit_amount }}">
+          {{ $unit->code }}
+        </option>
+      @endforeach
+    </select>
+  @endif
+</div>
 
-          {{-- RENT --}}
-          <div class="col-md-6">
-            <label>Rent (K)</label>
-            <input id="rentInput" type="number" step="0.01"
-                   name="rent_amount" class="af-input" required>
-          </div>
+{{-- START DATE --}}
+<div class="col-md-6">
+  <label>Start Date</label>
 
-          {{-- DEPOSIT --}}
-          <div class="col-md-6">
-            <label>Deposit (K)</label>
-            <input id="depositInput" type="number" step="0.01"
-                   name="deposit_amount" class="af-input">
-          </div>
+  @if(isset($lease))
+    {{-- LOCKED --}}
+    <input type="text"
+           class="af-input"
+           value="{{ \Carbon\Carbon::parse($lease->start_date)->format('d M Y') }}"
+           readonly>
+
+    <input type="hidden"
+           name="start_date"
+           value="{{ $lease->start_date }}">
+  @else
+    {{-- SELECTABLE --}}
+    <input type="date"
+           name="start_date"
+           class="af-input"
+           required>
+  @endif
+</div>
+
+
+{{-- RENT --}}
+<div class="col-md-6">
+  <label>Rent (K)</label>
+  <input type="number"
+         class="af-input"
+         name="rent_amount"
+         value="{{ $lease->rent_amount ?? '' }}"
+         {{ isset($lease) ? 'readonly' : 'required' }}>
+</div>
+
+{{-- DEPOSIT --}}
+<div class="col-md-6">
+  <label>Deposit (K)</label>
+  <input type="number"
+         class="af-input"
+         name="deposit_amount"
+         value="{{ $lease->deposit_amount ?? '' }}"
+         {{ isset($lease) ? 'readonly' : '' }}>
+</div>
+
 
           {{-- SIGNATURE --}}
           <div class="col-12 mt-2">

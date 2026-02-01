@@ -3,12 +3,48 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use App\Services\WirepickService;
 use App\Jobs\PollPaymentStatusJob;
 
 class PaymentController extends Controller
 {
+
+
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        $partner = $user?->partner;
+
+        if (!$partner) {
+            abort(403, 'No partner profile found.');
+        }
+
+$payments = Payment::with('property')
+    ->where('partner_id', $partner->id)
+    ->latest()
+    ->paginate(10);
+
+$totalAmount = Payment::where('partner_id', $partner->id)
+    ->whereIn('status', ['paid', 'payment_completed'])
+    ->sum('amount');
+
+$totalShares = Payment::where('partner_id', $partner->id)
+    ->whereIn('status', ['paid', 'payment_completed'])
+    ->sum('my_total_shares');
+
+$totalCount = Payment::where('partner_id', $partner->id)->count();
+
+return view('payments.index', compact(
+    'payments',
+    'totalAmount',
+    'totalShares',
+    'totalCount'
+));
+
+    }
+
     public function store(Request $request, WirepickService $wirepick)
     {
         // Merchant from API key middleware

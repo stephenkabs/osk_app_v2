@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Property;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Jenssegers\Agent\Agent;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class PropertyController extends Controller
@@ -130,11 +132,33 @@ class PropertyController extends Controller
         return response()->json(['path' => $path], 200);
     }
 
+    // public function show(Property $property)
+    // {
+    //     $this->authorizeOwner($property);
+    //     return view('properties.show', compact('property'));
+    // }
+
+
     public function show(Property $property)
-    {
-        $this->authorizeOwner($property);
-        return view('properties.show', compact('property'));
+{
+    $user = Auth::user();
+
+    $hasRole = fn ($r) => method_exists($user, 'hasRole') && $user->hasRole($r);
+
+    if ($hasRole('investor')) {
+        return view('properties.investor_show', compact('property'));
     }
+
+            // detect mobile
+    $agent = new Agent();
+
+      if ($agent->isMobile()) {
+    return view('properties.show_mobile', compact('property'));
+    }
+
+    // tenant / investor / others
+    return view('properties.show', compact('property'));
+}
 
     public function edit(Property $property)
     {

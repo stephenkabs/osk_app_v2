@@ -171,7 +171,7 @@
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-security">Security</button></li>
         </ul>
 
-        <form action="{{ route('user.store') }}" method="POST">
+        <form action="{{ route('users.store') }}" method="POST">
             @csrf
 
             <div class="tab-content">
@@ -196,7 +196,7 @@
                 </div>
 
                 <!-- ORGANIZATION -->
-                <div class="tab-pane fade" id="tab-org">
+                {{-- <div class="tab-pane fade" id="tab-org">
                     @php $isConsultant = auth()->user()->hasRole('loan_consultant'); @endphp
 
                     <label>Branch</label>
@@ -214,7 +214,7 @@
                             @endforeach
                         </select>
                     @endif
-                </div>
+                </div> --}}
 
                 <!-- ACCESS -->
                 <div class="tab-pane fade" id="tab-access">
@@ -251,7 +251,7 @@
                 <button class="af-btn">
                     <i class="fas fa-user-plus"></i> Create User
                 </button>
-                <a href="{{ route('user.index') }}" class="af-btn secondary">Cancel</a>
+                <a href="{{ route('users.index') }}" class="af-btn secondary">Cancel</a>
             </div>
         </form>
     </div>

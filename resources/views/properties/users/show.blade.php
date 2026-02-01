@@ -229,12 +229,27 @@
   position:relative;
 }
 
+.pill {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 12px;
+  border-radius:999px;
+  font-weight:800;
+  font-size:12px;
+  border:1px solid #d1fae5;
+}
+
+
 </style>
 @endpush
 
 
 <div class="container-fluid">
   <div class="col-lg-10 mx-auto">
+    <meta name="assign-route"
+      content="{{ route('property.lease.assign', [$property->slug, $user->slug]) }}">
+
 
     {{-- HEADER --}}
     <div class="apple-header">
@@ -329,36 +344,42 @@
     {{-- LEFT --}}
     <div class="d-flex align-items-center gap-3 flex-wrap">
 
-      {{-- LEASE STATUS --}}
+      {{-- LEASE STATUS / ACTIONS --}}
       @if($hasSignedLease && $latestSignedLease)
-        <div class="d-flex align-items-center gap-2">
-{{-- STATUS PILL (clickable) --}}
-<button type="button"
-        class="pill text-success border-0"
-        data-bs-toggle="modal"
-        data-bs-target="#leaseStatusModal">
-  <i class="fas fa-check-circle me-1"></i>
-  Lease Signed ({{ ucfirst($latestSignedLease->status) }})
-</button>
+
+        {{-- STATUS PILL --}}
+        <button type="button"
+                class="pill text-success border-0"
+                data-bs-toggle="modal"
+                data-bs-target="#leaseStatusModal">
+          <i class="fas fa-check-circle me-1"></i>
+          Lease Signed ({{ ucfirst($latestSignedLease->status) }})
+        </button>
+
+        {{-- DOWNLOAD PDF --}}
+        <a href="{{ route('property.agreements.download', [
+            $property->slug,
+            $latestSignedLease->slug
+        ]) }}"
+           class="af-btn-outline">
+          <i class="fas fa-file-pdf"></i> Download Lease
+        </a>
+
+@if($latestSignedLease && $latestSignedLease->status === 'pending')
+  {{-- COPY LEASE LINK --}}
+  <button type="button"
+          class="af-btn-outline"
+          id="copyExistingLeaseBtn"
+          data-link="{{ route('property.agreements.public.create', $property->slug) }}?lease={{ $latestSignedLease->slug }}">
+    <i class="fas fa-copy"></i> Copy Lease Link
+  </button>
+@endif
 
 
-          {{-- <a href="{{ route('property.agreements.pdf', [
-              $property->slug,
-              $latestSignedLease->slug
-          ]) }}"
-             class="af-btn-outline">
-            <i class="fas fa-file-pdf"></i> PDF
-          </a> --}}
 
-          <a href="{{ route('property.agreements.download', [
-              $property->slug,
-              $latestSignedLease->slug
-          ]) }}"
-             class="af-btn-outline">
-               <i class="fas fa-file-pdf"></i> Download Lease
-          </a>
-        </div>
       @else
+
+        {{-- START LEASE --}}
         <a href="{{ route('property.agreements.public.create', [
             'property' => $property->slug,
             'user'     => $user->id
@@ -367,6 +388,9 @@
            class="af-btn-outline">
           <i class="fas fa-file-signature"></i> Start Lease
         </a>
+
+
+
       @endif
 
       {{-- WHATSAPP --}}
@@ -378,18 +402,34 @@
         </a>
       @endif
 
+      {{-- QBO SYNC STATUS --}}
+      @if($user->quickbooks_customer_id)
+        <span class="pill"
+              style="background:#ecfdf5;border-color:#bbf7d0;color:#065f46;">
+          <i class="fas fa-check-circle me-1"></i>
+          QBO Synced
+        </span>
+      @else
+        <button type="button"
+                class="af-btn-outline"
+                data-bs-toggle="modal"
+                data-bs-target="#syncQboModal">
+          <i class="fas fa-cloud-upload-alt"></i>
+          Sync to QBO
+        </button>
+      @endif
+
     </div>
 
     {{-- DELETE --}}
-<button type="button"
-        class="af-btn-outline text-danger"
-        data-delete
-        data-title="Delete Tenant"
-        data-message="You are about to permanently delete {{ $user->name }}. This cannot be undone."
-        data-action="{{ route('property.users.destroy', [$property->slug, $user->slug]) }}">
-  <i class="fas fa-trash"></i> Delete
-</button>
-
+    <button type="button"
+            class="af-btn-outline text-danger"
+            data-delete
+            data-title="Delete Tenant"
+            data-message="You are about to permanently delete {{ $user->name }}. This cannot be undone."
+            data-action="{{ route('property.users.destroy', [$property->slug, $user->slug]) }}">
+      <i class="fas fa-trash"></i> Delete
+    </button>
 
   </div>
 </div>
@@ -736,6 +776,225 @@ document.addEventListener('DOMContentLoaded', () => {
       prorated ? 'block' : 'none';
   });
 
+});
+</script>
+
+<div class="modal fade modal-apple" id="syncQboModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:460px">
+    <div class="modal-content">
+
+      <form method="POST"
+            action="{{ route('users.kyc.update', $user) }}">
+        @csrf
+        @method('PUT')
+
+        {{-- Force approval --}}
+        <input type="hidden" name="kyc_status" value="approved">
+
+        <div class="modal-body text-center p-4">
+
+          {{-- ICON --}}
+          <div style="
+            width:64px;height:64px;border-radius:50%;
+            background:linear-gradient(180deg,#0b0c0f,#000);
+            color:#e1a422;
+            display:flex;align-items:center;justify-content:center;
+            font-size:28px;
+            margin:0 auto 14px;">
+            <i class="fas fa-cloud-upload-alt"></i>
+          </div>
+
+          <h5 class="fw-bold mb-2">Sync Tenant to QuickBooks</h5>
+
+          <p class="text-muted small mb-4">
+            This will approve KYC for <strong>{{ $user->name }}</strong>
+            and attempt to sync their details to QuickBooks.
+            <br><br>
+            If the sync fails, you can retry at any time.
+          </p>
+
+          <div class="d-flex justify-content-center gap-2">
+            <button type="button"
+                    class="btn btn-light soft-btn"
+                    data-bs-dismiss="modal">
+              Cancel
+            </button>
+
+            <button type="submit" class="af-btn">
+              <i class="fas fa-check me-1"></i> Confirm & Sync
+            </button>
+          </div>
+
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal fade modal-apple" id="assignLeaseModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:520px">
+    <div class="modal-content">
+
+      <div class="modal-header border-0">
+        <h5 class="fw-bold mb-0">
+          <i class="fas fa-file-signature me-2"></i>
+          Assign Unit & Send Lease
+        </h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form id="assignLeaseForm">
+        <div class="modal-body">
+
+          {{-- UNIT --}}
+          <div class="mb-3">
+            <label class="small fw-bold">Select Unit</label>
+            <select id="leaseUnit"
+                    class="af-input"
+                    required>
+              <option value="">-- Select Available Unit --</option>
+              @foreach(
+                \App\Models\Unit::where('property_id',$property->id)
+                  ->where('status','available')
+                  ->orderBy('code')
+                  ->get() as $unit
+              )
+                <option value="{{ $unit->id }}">
+                  {{ $unit->code }} — K{{ number_format($unit->rent_amount ?? 0,2) }}
+                </option>
+              @endforeach
+            </select>
+          </div>
+
+          {{-- START DATE --}}
+          <div class="mb-3">
+            <label class="small fw-bold">Start Date</label>
+            <input type="date"
+                   id="leaseStartDate"
+                   class="af-input"
+                   required>
+          </div>
+
+        </div>
+
+<div class="modal-footer border-0 d-flex justify-content-between">
+  <button type="button"
+          class="btn btn-light soft-btn"
+          data-bs-dismiss="modal">
+    Cancel
+  </button>
+
+  <div class="d-flex gap-2">
+    <button type="button"
+            id="copyLeaseLinkBtn"
+            class="af-btn-outline d-none">
+      <i class="fas fa-copy"></i>
+      Copy Link
+    </button>
+
+    <button type="submit"
+            id="saveLeaseBtn"
+            class="af-btn">
+      <i class="fas fa-save me-1"></i>
+      Save & Generate Link
+    </button>
+  </div>
+</div>
+
+
+      </form>
+
+    </div>
+  </div>
+</div>
+<script>
+let generatedLeaseLink = null;
+
+document.getElementById('assignLeaseForm')
+?.addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const unitId    = document.getElementById('leaseUnit').value;
+  const startDate = document.getElementById('leaseStartDate').value;
+
+  if (!unitId || !startDate) {
+    alert('Please select unit and start date');
+    return;
+  }
+
+  const url = document
+    .querySelector('meta[name="assign-route"]')
+    .getAttribute('content');
+
+  try {
+const res = await fetch(url, {
+  method: 'POST',
+  credentials: 'same-origin', // 🔥 THIS FIXES 419
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+  },
+  body: JSON.stringify({
+    unit_id: unitId,
+    start_date: startDate
+  })
+});
+
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error('SERVER ERROR:', text);
+      alert('Failed to save lease (see console)');
+      return;
+    }
+
+    const data = await res.json();
+
+    generatedLeaseLink = data.sign_url;
+
+    // show copy button
+    document.getElementById('copyLeaseLinkBtn')
+      .classList.remove('d-none');
+
+    // change button text
+    document.getElementById('saveLeaseBtn').innerHTML =
+      '<i class="fas fa-check me-1"></i> Lease Saved';
+
+  } catch (err) {
+    console.error(err);
+    alert('Network or server error');
+  }
+});
+
+// COPY LINK
+document.getElementById('copyLeaseLinkBtn')
+?.addEventListener('click', async () => {
+  if (!generatedLeaseLink) return;
+
+  await navigator.clipboard.writeText(generatedLeaseLink);
+
+  const btn = document.getElementById('copyLeaseLinkBtn');
+  btn.innerHTML = '<i class="fas fa-check"></i> Copied';
+  setTimeout(() => {
+    btn.innerHTML = '<i class="fas fa-copy"></i> Copy Link';
+  }, 1200);
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('copyExistingLeaseBtn');
+  if (!btn) return;
+
+  btn.addEventListener('click', async () => {
+    const link = btn.dataset.link;
+    await navigator.clipboard.writeText(link);
+
+    const original = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check me-1"></i> Copied';
+    setTimeout(() => btn.innerHTML = original, 1200);
+  });
 });
 </script>
 

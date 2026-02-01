@@ -40,7 +40,7 @@ class UserController extends Controller
         $user = User::find($id);
         $roles = Role::pluck('name','name')->all();
 
-        return view ('user.create', compact('roles','user'));
+        return view ('users.create', compact('roles','user'));
     }
 
     /**
@@ -119,14 +119,14 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        if ($image = $request->file('image')) {
-            $destinationPath = 'users/images';
-            $profileImage = date('YmdHis') . "." . $image->getClientOriginalExtension();
-            $image->move($destinationPath, $profileImage);
-            $input['image'] = "$profileImage";
-        }else{
-            unset($input['image']);
-        }
+        // if ($image = $request->file('image')) {
+        //     $destinationPath = 'users/images';
+        //     $profileImage = date('YmdHis') . "." . $image->getClientOriginalExtension();
+        //     $image->move($destinationPath, $profileImage);
+        //     $input['image'] = "$profileImage";
+        // }else{
+        //     unset($input['image']);
+        // }
 
         $data = [
             'name' => $request->name,

@@ -1,11 +1,19 @@
 <?php
 
+use App\Http\Controllers\Admin\BackupController;
+use App\Http\Controllers\Admin\LoginAttemptController;
+use App\Http\Controllers\Admin\PrivacyPolicyController;
+use App\Http\Controllers\Admin\SystemSettingsController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\LoginHeroController;
+use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Property\RentSummaryController;
 use App\Http\Controllers\PropertyController;
 use App\Http\Controllers\PropertyExpensesController;
+use App\Http\Controllers\PropertyInvestmentController;
 use App\Http\Controllers\PropertyLeaseAgreementController;
 use App\Http\Controllers\PropertyLeaseTemplateController;
 use App\Http\Controllers\PropertyPaymentsController;
@@ -15,7 +23,17 @@ use App\Http\Controllers\PropertyUserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WirepickCallbackController;
+use App\Http\Controllers\WirepickPaymentController;
 use Illuminate\Support\Facades\Route;
+
+
+
+
+
+
+
+
 
 
 
@@ -60,12 +78,197 @@ Route::post('/properties/sync', [PropertyController::class, 'syncFromQBO'])
     ->middleware('auth');
 
 
+    Route::put('/users/{user}/kyc', [PropertyUserController::class, 'updateKyc'])
+     ->name('users.kyc.update');
+ Route::patch('/users/{user:slug}/kyc', [PropertyUserController::class, 'updateKyc'])->name('users.updateKyc');
+
+
+Route::post(
+    '/properties/{property:slug}/users/{user:slug}/assign-lease',
+    [PropertyLeaseAgreementController::class, 'assignAndGenerateLink']
+)->name('property.lease.assign');
+
+Route::get(
+  '/properties/{property:slug}/lease-assign',
+  [PropertyLeaseAgreementController::class, 'assignBoard']
+)->name('property.lease.assign.board');
+
+Route::post(
+    '/properties/{property:slug}/lease-assign',
+    [PropertyLeaseAgreementController::class, 'assignFromBoard']
+)->name('property.lease.assign.api');
+
+
+Route::prefix('properties/{property}')
+    ->middleware(['auth'])
+    ->group(function () {
+
+        Route::get('/rent-summary', [
+            \App\Http\Controllers\Property\RentSummaryController::class,
+            'index'
+        ])->name('property.rent.summary');
+
+    });
+
 
 
 // Landlord dashboard
 Route::get('/landlord/dashboard', [AdminController::class, 'landlordDashboard'])
     ->name('dashboard.landlord')
     ->middleware('auth');
+        Route::get('/dashboard/tenant', [AdminController::class, 'tenantDashboard'])
+        ->name('dashboard.tenant')  ->middleware('auth');
+
+        Route::middleware(['auth', 'role:investor'])
+    ->get('/dashboard/investor', [AdminController::class, 'investorDashboard'])
+    ->name('dashboard.investor');
+
+/*
+|--------------------------------------------------------------------------
+| PARTNERS (INVESTORS)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth'])->group(function () {
+
+    /* ======================
+       INVESTOR SELF ACTIONS
+    ====================== */
+
+    Route::get('/partner/register', [PartnerController::class, 'create'])
+        ->name('partners.create');
+
+    Route::post('/partner/register', [PartnerController::class, 'store'])
+        ->name('partners.store');
+
+    Route::get('/partner/{partner:slug}', [PartnerController::class, 'show'])
+        ->name('partners.show');
+
+    Route::get('/partner/{partner:slug}/edit', [PartnerController::class, 'edit'])
+        ->name('partners.edit');
+
+    Route::put('/partner/{partner:slug}', [PartnerController::class, 'update'])
+        ->name('partners.update');
+
+    Route::get('/partner/{partner:slug}/agreement', [PartnerController::class, 'downloadAgreement'])
+        ->name('partners.agreement.download');
+
+    // Route::post('/partner/{partner}/sync-qbo', [PartnerController::class, 'syncWithQBO'])
+    //     ->name('partners.sync.qbo');
+    Route::get('/partner_kyc', [PartnerController::class, 'investor_kyc'])->name('partners.investor_kyc');
+    Route::post('/partners/{partner:slug}/sync-qbo', [PartnerController::class, 'syncWithQBO'])
+     ->name('partners.sync-qbo');
+
+         Route::get('partners/{partner}/agreement/download', [PartnerController::class, 'downloadAgreement'])
+        ->name('partners.downloadAgreement');
+
+    /* ======================
+       ADMIN ONLY
+    ====================== */
+
+    Route::middleware(['role:admin'])->group(function () {
+
+        Route::get('/partners', [PartnerController::class, 'index'])
+            ->name('partners.index');
+
+        Route::patch('/partners/{partner}/status', [PartnerController::class, 'updateStatus'])
+            ->name('partners.update.status');
+
+        Route::delete('/partners/{partner}', [PartnerController::class, 'destroy'])
+            ->name('partners.destroy');
+
+    });
+
+});
+
+    // routes/web.php
+Route::put('/users/{user}/approve', [UserController::class, 'approve'])
+    ->name('users.approve')
+    ->middleware(['auth']);
+        Route::resource('users', UserController::class);
+
+
+Route::get('/admin/security/login-attempts',
+    [\App\Http\Controllers\Admin\LoginAttemptController::class, 'index']
+)->middleware(['auth', 'role:admin'])
+ ->name('admin.login-attempts');
+
+
+
+
+Route::post('/investment/pay', [PropertyInvestmentController::class, 'wirepickPayment'])
+    ->name('wirepick.invest');
+        Route::post('/property-invest/checkout', [PropertyInvestmentController::class, 'checkout'])->name('property-invest.checkout');
+    Route::get('/property-invest/success', [PropertyInvestmentController::class, 'success'])->name('property-invest.success');
+    Route::get('/property-invest/cancel', [PropertyInvestmentController::class, 'cancel'])->name('property-invest.cancel');
+    Route::get('/property-invest/thank-you', [PropertyInvestmentController::class, 'thankYou'])->name('property-invest.thank-you');
+
+
+Route::get('/pay',  [WirepickPaymentController::class, 'showForm'])->name('wp.form');
+// Route::post('/pay', [WirepickPaymentController::class, 'process'])
+//     ->name('wp.process');
+
+Route::post('/pay_plus', [WirepickPaymentController::class, 'trying'])->name('wp.trying');
+
+// web.php
+Route::get('/properties/{property}/checkout',
+    [WirepickPaymentController::class, 'checkout']
+)->middleware('auth')->name('wirepick.checkout');
+
+Route::post('/wirepick/process',
+    [WirepickPaymentController::class, 'process']
+)->middleware('auth')->name('wp.process');
+
+
+// routes/web.php
+Route::middleware(['auth'])
+    ->get('/payments', [PaymentController::class, 'index'])
+    ->name('payments.index');
+
+
+/*
+|--------------------------------------------------------------------------
+| Public
+|--------------------------------------------------------------------------
+*/
+Route::get('/privacy-policy', [PrivacyPolicyController::class, 'show'])
+    ->name('privacy.show');
+
+
+    Route::get('/web/privacy-policy', [PrivacyPolicyController::class, 'show_web'])
+    ->name('privacy.show_web');
+
+/*
+|--------------------------------------------------------------------------
+| Admin
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth'])
+    ->prefix('admin/privacy')
+    ->name('admin.privacy.')
+    ->group(function () {
+
+        Route::get('/', [PrivacyPolicyController::class, 'index'])->name('index');
+        Route::get('/create', [PrivacyPolicyController::class, 'create'])->name('create');
+        Route::post('/', [PrivacyPolicyController::class, 'store'])->name('store');
+        Route::get('/{privacyPolicy}/edit', [PrivacyPolicyController::class, 'edit'])->name('edit');
+        Route::put('/{privacyPolicy}', [PrivacyPolicyController::class, 'update'])->name('update');
+        Route::delete('/{privacyPolicy}', [PrivacyPolicyController::class, 'destroy'])->name('destroy');
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     //roles and permissions
@@ -195,6 +398,37 @@ Route::prefix('properties/{property}')
         )->name('property.payments.receipt');
     });
 
+    Route::post(
+    '/properties/{property}/payments/mobile-money',
+    [PropertyPaymentsController::class, 'payWithMobileMoney']
+)->name('property.payments.mobile');
+
+
+
+// routes/web.php
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
+    Route::get('/backup', [\App\Http\Controllers\Admin\BackupController::class, 'index'])
+        ->name('admin.backup.index');
+
+    Route::post('/backup/run', [\App\Http\Controllers\Admin\BackupController::class, 'run'])
+        ->name('admin.backup.run');
+});
+
+
+
+    Route::get('/kyc/pending', function () {
+    return view('kyc.pending');
+})->name('kyc.pending');
+
+
+
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/settings/login-hero', [LoginHeroController::class, 'edit'])
+        ->name('login-hero.edit');
+
+    Route::post('/settings/login-hero', [LoginHeroController::class, 'store'])
+        ->name('login-hero.store');
+});
 
 
 
@@ -258,5 +492,23 @@ Route::get('/properties/{property:slug}/agreements/{agreement:slug}/download',
     [PropertyLeaseAgreementController::class, 'download']
 )->name('property.agreements.download');
 
+
+    Route::middleware(['auth'])
+    ->prefix('admin/system-settings')
+    ->name('admin.settings.')
+    ->group(function () {
+
+        // ⚙️ Settings Hub (landing page)
+        Route::get('/', function () {
+            return view('admin.system-settings.hub');
+        })->name('hub');
+
+        // ⚙️ General settings
+        Route::get('/general', [SystemSettingsController::class, 'index'])
+            ->name('index');
+
+        Route::post('/update', [SystemSettingsController::class, 'update'])
+            ->name('update');
+    });
 
 require __DIR__.'/auth.php';

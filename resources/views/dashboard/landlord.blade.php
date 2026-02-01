@@ -1,4 +1,4 @@
-landlord
+
 
 @extends('layouts.app')
 
@@ -144,7 +144,7 @@ landlord
     <div>
         <h3 class="fw-bold mb-1 d-flex align-items-center gap-2">
             {{-- <i class="fas fa-user-shield text-danger"></i> --}}
-            Landlord Dashboard
+            OSK Manager Dashboard
         </h3>
 
         <p class="text-muted mb-0 small">
@@ -158,7 +158,7 @@ landlord
         {{-- USER INFO --}}
         <div class="text-end d-none d-md-block">
             <div class="fw-semibold text-dark">{{ $userName }}</div>
-            <div class="text-muted small">Landlord</div>
+            <div class="text-muted small">Manager</div>
         </div>
 
         {{-- AVATAR --}}
@@ -290,6 +290,40 @@ landlord
     </div>
 </a>
 
+{{-- RENT SUMMARY --}}
+<a href="{{ route('property.rent.summary', $property->slug) }}"
+   class="settings-card">
+
+  <div class="settings-icon bg-indigo">
+    <i class="fas fa-chart-line"></i>
+  </div>
+
+  <div class="settings-title">
+    Rent Summary
+  </div>
+
+  <div class="settings-desc">
+    View monthly rent, payments, balances & empty units
+  </div>
+
+</a>
+@if(isset($property))
+  {{-- ASSIGN LEASE --}}
+  <a href="{{ route('property.lease.assign.board', $property->slug) }}"
+     class="settings-card">
+
+    <div class="settings-icon bg-green">
+      <i class="fas fa-random"></i>
+    </div>
+
+    <div class="settings-title">Assign Lease</div>
+
+    <div class="settings-desc">
+      Drag tenants into available units and generate lease links
+    </div>
+
+  </a>
+@endif
 
 </div>
 </div>

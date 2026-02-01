@@ -44,6 +44,7 @@ return [
         'webhook_url_inventory_fetch' => env('MAKE_WEBHOOK_URL_INVENTORY_FETCH'),
         'webhook_url_kyc' => env('MAKE_WEBHOOK_URL_KYC'),
         'webhook_url_payments' => env('MAKE_WEBHOOK_URL_PAYMENTS'),
+        'webhook_url_qb_rent_payment' => env('MAKE_WEBHOOK_RENT_URL_PAYMENTS_PAYMENTS'),
     ],
 
 

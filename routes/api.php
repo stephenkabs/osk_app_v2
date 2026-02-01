@@ -1,10 +1,14 @@
 <?php
 
-use Illuminate\Http\Request;
-use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Api\PaygateController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PropertyLeaseAgreementController;
 
+use App\Http\Controllers\WirepickCallbackController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -23,8 +27,14 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 
 
+
 Route::post('/payments', [PaymentController::class, 'store']);
 
 
 Route::post('/payments', [PaygateController::class, 'create']);
 Route::post('/payments/status', [PaygateController::class, 'status']);
+
+
+Route::post('/wirepick/callback', [WirepickCallbackController::class, 'handle'])
+    ->name('wirepick.callback');
+

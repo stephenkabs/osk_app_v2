@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Jenssegers\Agent\Agent;
 use App\Models\PropertyPayment;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Auth\Events\Registered;
@@ -115,10 +117,7 @@ public function publicStore(Request $request, Property $property)
 
     // ✅ Redirect directly to public lease agreement creation
 // ✅ Redirect directly to public lease agreement creation
-return redirect()->route('property.agreements.public.create', [
-    'property' => $property->slug,
-    'user'     => $user->id, // <-- use slug instead of ID
-]);
+return redirect()->route('kyc.pending' );
 
 }
 
@@ -390,9 +389,52 @@ if ($latestSignedLease) {
                          ->with('success','User updated successfully!');
     }
 
-    /**
-     * Delete a user
-     */
+  public function updateKyc(Request $request, User $user)
+{
+    $request->validate([
+        'kyc_status' => ['required','in:pending,approved,rejected'],
+    ]);
+
+    // ✅ Update local KYC status
+    $user->update([
+        'kyc_status' => $request->input('kyc_status'),
+    ]);
+
+    // ✅ Push to QuickBooks via Make webhook if approved
+    if ($user->kyc_status === 'approved') {
+        try {
+            $response = Http::post(config('services.make.webhook_url_kyc'), [
+                'name'      => $user->name,
+                'email'     => $user->email,
+                'address'   => $user->address,
+                'city'      => $user->city,
+                'country'   => $user->country,
+                'phone'     => $user->whatsapp_phone,
+                'kycStatus' => $user->kyc_status,
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                if (isset($data['quickbooks_customer_id'])) {
+                    $user->update([
+                        'quickbooks_customer_id' => $data['quickbooks_customer_id']
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error("QuickBooks sync failed for user {$user->id}: " . $e->getMessage());
+        }
+    }
+
+    return back()->with('success', "KYC status for {$user->name} updated to {$user->kyc_status}.");
+}
+
+
+
+
+
+
     public function destroy(Property $property, User $user)
     {
         if ($user->profile_image) {

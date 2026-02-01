@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Minutoes App</title>
+  <title>OSK App</title>
 
   <link href="/assets/css/bootstrap.min.css" rel="stylesheet" />
   <link href="/assets/css/app.min.css" rel="stylesheet" />
@@ -141,7 +141,7 @@ body {
    🌈 GRADIENT HEADER
 ================================ */
 .gradient-animate {
-   background: linear-gradient(120deg,#091019,#053c67,#05686f,#2b85ca,#0a4267);
+   background: linear-gradient(120deg,#1c1c1c,#673d05,#6f4a05,#ca8d2b,#67450a);
   background-size:300% 300%;
   animation: gradientFlow 12s ease infinite;
 }
@@ -236,6 +236,68 @@ body {
   border-radius: 999px;
 }
 
+/* ===============================
+   📊 RENT SUMMARY CARDS
+================================ */
+
+.summary-card{
+  background:#ffffff;
+  border:1px solid #e6e8ef;
+  border-radius:18px;
+  padding:18px 16px;
+  text-align:center;
+  font-weight:800;
+  box-shadow:0 8px 28px rgba(0,0,0,.06);
+  transition:.25s ease;
+}
+
+.summary-card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 16px 45px rgba(0,0,0,.12);
+}
+
+/* Label */
+.summary-card span{
+  display:block;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:#6b7280;
+  margin-bottom:6px;
+}
+
+/* Value */
+.summary-card strong{
+  font-size:20px;
+  letter-spacing:-.02em;
+  color:#0b0c0f;
+}
+
+/* Paid */
+.summary-success strong{
+  color:#16a34a;
+}
+
+/* Overdue */
+.summary-danger strong{
+  color:#dc2626;
+}
+
+/* ===============================
+   📱 RESPONSIVE
+================================ */
+
+@media (max-width:768px){
+  .summary-card{
+    padding:14px 12px;
+  }
+
+  .summary-card strong{
+    font-size:16px;
+  }
+}
+
+
   </style>
 </head>
 
@@ -289,13 +351,13 @@ body {
 <!-- ADMIN / WELCOME CARD -->
 <div class="apple-card gradient-animate text-white">
   <div class="d-flex align-items-center gap-3">
-    <div class="bg-light text-primary rounded-circle d-flex align-items-center justify-content-center"
+    <div class="bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center"
          style="width:64px;height:64px;">
       <i class="fas fa-user-shield fa-lg"></i>
     </div>
 
     <div class="flex-grow-1">
-      <h4 class="mb-1 fw-bold" style="color: white">Administration Panel</h4>
+      <h4 class="mb-1 fw-bold" style="color: white">OSK Admin Dashboard</h4>
       <small class="text-white-50">
         Centralized control for users, permissions, reports & system configuration
       </small>
@@ -318,7 +380,7 @@ body {
 
   {{-- PROPERTIES --}}
   <a href="/properties" class="settings-card">
-    <div class="settings-icon bg-purple">
+    <div class="settings-icon bg-orange">
       <i class="fas fa-building"></i>
     </div>
     <div class="settings-title">Properties</div>
@@ -328,56 +390,65 @@ body {
   </a>
 
 {{-- CLIENTS / TENANTS --}}
-<a href="/users" class="settings-card position-relative">
+<a href="{{ route('property.lease.assign.board', $property->slug) }}" class="settings-card position-relative">
 
-  {{-- 🔔 PENDING BADGE --}}
+  {{-- 🔔 NEEDS LEASE BADGE --}}
   @if($pendingClientsCount > 0)
     <span class="pending-badge">
       {{ $pendingClientsCount }}
     </span>
   @endif
 
-  <div class="settings-icon bg-blue">
+  <div class="settings-icon bg-orange">
     <i class="fas fa-users"></i>
   </div>
 
   <div class="settings-title d-flex align-items-center gap-2">
-    Clients
+    Tenants
     @if($pendingClientsCount > 0)
-      <span class="pending-text">Pending approval</span>
+      <span class="pending-text">Needs lease</span>
     @endif
   </div>
 
   <div class="settings-desc">
-    View and manage landlord's profiles
+    Tenants without an active lease or pending assignment
+  </div>
+
+</a>
+
+{{-- PARTNERS & INVESTORS --}}
+<a href="{{ route('partners.index') }}" class="settings-card">
+  <div class="settings-icon bg-orange">
+    <i class="fas fa-handshake"></i>
+  </div>
+  <div class="settings-title">Partners & Investors</div>
+  <div class="settings-desc">
+    Manage investor profiles, agreements & approvals
   </div>
 </a>
 
-  {{-- BILLING & PAYMENTS --}}
-  <a href="/billing/payments" class="settings-card">
-    <div class="settings-icon bg-green">
-      <i class="fas fa-credit-card"></i>
-    </div>
-    <div class="settings-title">Billing & Payments</div>
-    <div class="settings-desc">
-      Track rent payments, invoices & receipts
-    </div>
-  </a>
+@if(isset($property))
+  {{-- ASSIGN LEASE --}}
+  <a href="{{ route('property.lease.assign.board', $property->slug) }}"
+     class="settings-card">
 
-  {{-- ACTIVITY LOGS --}}
-  <a href="/activity-logs" class="settings-card">
-    <div class="settings-icon bg-orange">
-      <i class="fas fa-history"></i>
+    <div class="settings-icon bg-green">
+      <i class="fas fa-random"></i>
     </div>
-    <div class="settings-title">Activity Logs</div>
+
+    <div class="settings-title">Assign Lease</div>
+
     <div class="settings-desc">
-      Monitor system actions, changes & audits
+      Drag tenants into available units and generate lease links
     </div>
+
   </a>
+@endif
+
 
   {{-- GENERAL SETTINGS --}}
-  <a href="/settings/general" class="settings-card">
-    <div class="settings-icon bg-gray">
+  <a href="/admin/system-settings" class="settings-card">
+    <div class="settings-icon bg-orange">
       <i class="fas fa-cog"></i>
     </div>
     <div class="settings-title">General Settings</div>
@@ -387,7 +458,8 @@ body {
   </a>
 
 </div>
-
+{{-- 📊 RENT SUMMARY --}}
+@include('properties.rent-summary._summary')
 
 </div>
 </div>
