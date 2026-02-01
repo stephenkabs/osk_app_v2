@@ -17,6 +17,7 @@ public function run(): void
         AdminUserSeeder::class,
         ManagerUserSeeder::class,
         UserSeeder::class,
+                PropertySeeder::class, // ✅ ADD THIS
     ]);
 }
 
