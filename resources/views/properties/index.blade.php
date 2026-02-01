@@ -255,6 +255,207 @@
     transition: all .25s ease;
 }
 
+/* 🍎 3 DOTS MENU */
+.property-menu {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 20;
+}
+
+.menu-btn {
+    background: rgba(255,255,255,.9);
+    border: 1px solid #e5e7eb;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.menu-btn:hover {
+    background: #fff;
+    box-shadow: 0 6px 16px rgba(0,0,0,.15);
+}
+
+.menu-dropdown {
+    position: absolute;
+    right: 0;
+    top: 38px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 12px 30px rgba(0,0,0,.15);
+    display: none;
+    min-width: 140px;
+    overflow: hidden;
+}
+
+.menu-dropdown.open {
+    display: block;
+}
+
+.menu-delete {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 10px 14px;
+    font-weight: 700;
+    font-size: 14px;
+    color: #dc2626;
+    text-align: left;
+}
+
+.menu-delete:hover {
+    background: #fee2e2;
+}
+.aw-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    display: none;
+}
+
+.aw-modal[aria-hidden="false"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.3);
+    backdrop-filter: blur(6px);
+}
+
+.aw-modal__sheet {
+    background: #fff;
+    border-radius: 18px;
+    padding: 20px;
+    width: min(90%, 420px);
+    box-shadow: 0 20px 50px rgba(0,0,0,.2);
+}
+
+.aw-modal__title {
+    font-weight: 800;
+    font-size: 18px;
+}
+
+.aw-modal__text {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+/* ===============================
+   🍎 3-DOTS PROPERTY MENU
+================================ */
+
+.property-menu {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 30;
+}
+
+/* 3 dots button */
+.property-menu-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 2px 6px rgba(0,0,0,.15),
+    inset 0 0 0 1px rgba(255,255,255,.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.property-menu-btn i {
+  font-size: 14px;
+  color: #111827;
+}
+
+/* Hover / active */
+.property-menu-btn:hover {
+  transform: scale(1.06);
+  background: rgba(255,255,255,.95);
+}
+
+.property-menu-btn:active {
+  transform: scale(.95);
+}
+
+/* ===============================
+   🍎 DROPDOWN (Action Sheet)
+================================ */
+
+.menu-dropdown {
+  position: absolute;
+  top: 42px;
+  right: 0;
+  min-width: 140px;
+  background: rgba(255,255,255,.95);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 14px;
+  box-shadow:
+    0 18px 40px rgba(0,0,0,.18);
+  padding: 6px;
+  opacity: 0;
+  transform: translateY(-6px) scale(.96);
+  pointer-events: none;
+  transition: all .18s ease;
+}
+
+/* Show menu */
+.menu-dropdown.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+/* ===============================
+   🍎 MENU ITEMS
+================================ */
+
+.menu-delete {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #dc2626;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background .15s ease;
+  cursor: pointer;
+}
+
+.menu-delete i {
+  font-size: 14px;
+}
+
+/* Hover effect */
+.menu-delete:hover {
+  background: rgba(220,38,38,.08);
+}
+
+/* Optional: subtle divider */
+.menu-divider {
+  height: 1px;
+  background: rgba(0,0,0,.06);
+  margin: 4px 0;
+}
+
+
     </style>
 @endpush
 
@@ -309,24 +510,52 @@
                    class="text-decoration-none text-dark">
 
                     <div class="property-card">
-{{-- IMAGE --}}
-<div class="property-media d-flex align-items-center justify-content-center">
+<div class="property-media position-relative d-flex align-items-center justify-content-center">
 
+    {{-- 3 DOTS MENU --}}
+    @role('admin|super_admin')
+    <div class="property-menu"
+         onclick="event.stopPropagation()">
+
+        <button type="button"
+                class="property-menu-btn"
+                onclick="event.preventDefault(); event.stopPropagation(); toggleMenu(this)">
+            <i class="fas fa-ellipsis-v"></i>
+        </button>
+
+        <div class="menu-dropdown"
+             onclick="event.stopPropagation()">
+
+            <button type="button"
+                    class="menu-delete"
+                    onclick="event.preventDefault(); event.stopPropagation(); openDeleteModal('{{ $property->slug }}', '{{ $property->property_name }}')">
+                <i class="fas fa-trash me-1"></i> Delete
+            </button>
+
+        </div>
+    </div>
+    @endrole
+
+    {{-- IMAGE --}}
     @if(count($imgs))
         <img src="{{ asset('storage/'.$imgs[0]) }}"
              class="property-img"
+             alt="{{ $property->property_name }}"
+             onclick="event.stopPropagation()"
              onerror="this.onerror=null;this.closest('.property-media').innerHTML = `
                 <div class='no-image-icon'>
                     <i class='fas fa-building'></i>
                 </div>
              `;">
     @else
-        <div class="no-image-icon">
+        <div class="no-image-icon" onclick="event.stopPropagation()">
             <i class="fas fa-building"></i>
         </div>
     @endif
 
 </div>
+
+
 
                         {{-- BODY --}}
                         <div class="property-body">
@@ -359,6 +588,34 @@
 
     {{ $properties->links() }}
 </div>
+
+{{-- 🍎 APPLE DELETE MODAL --}}
+<div id="appleDeleteModal" class="aw-modal" aria-hidden="true">
+    <div class="aw-modal__sheet">
+        <h3 class="aw-modal__title">Delete Property</h3>
+        <p class="aw-modal__text" id="deletePropertyText">
+            Are you sure you want to delete this property?
+        </p>
+
+        <form method="POST" id="deletePropertyForm">
+            @csrf
+            @method('DELETE')
+
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <button type="button"
+                        class="aw-btn aw-btn--secondary"
+                        onclick="closeDeleteModal()">
+                    Cancel
+                </button>
+
+                <button class="aw-btn aw-btn--primary">
+                    Delete
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 
 {{-- 🍏 SYNC MODAL --}}
 <div id="sync-modal" class="aw-modal" aria-hidden="true">
@@ -404,5 +661,42 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 @endpush
+<script>
+function openDeleteModal(slug, name) {
+    // Close any open 3-dot menus
+    document.querySelectorAll('.menu-dropdown').forEach(m => m.classList.remove('open'));
+
+    // Set text
+    document.getElementById('deletePropertyText').innerText =
+        `Are you sure you want to delete "${name}"? This action cannot be undone.`;
+
+    // Set form action
+    document.getElementById('deletePropertyForm').action =
+        `/properties/${slug}`;
+
+    // Open modal
+    document.getElementById('appleDeleteModal')
+        .setAttribute('aria-hidden', 'false');
+}
+
+function closeDeleteModal() {
+    document.getElementById('appleDeleteModal')
+        .setAttribute('aria-hidden', 'true');
+}
+</script>
+<script>
+function toggleMenu(btn) {
+    document.querySelectorAll('.menu-dropdown.open')
+        .forEach(m => m.classList.remove('open'));
+
+    const menu = btn.nextElementSibling;
+    menu.classList.toggle('open');
+}
+
+document.addEventListener('click', () => {
+    document.querySelectorAll('.menu-dropdown.open')
+        .forEach(m => m.classList.remove('open'));
+});
+</script>
 
 @endsection
