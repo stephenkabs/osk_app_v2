@@ -5,32 +5,23 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
+use Illuminate\Support\Str;
 
 class AdminUserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $roles = ['admin'];
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@osk.app'],
+            [
+                'name'       => 'System Admin',
+                'slug'       => Str::slug('System Admin'),
+                'password'   => Hash::make('password'), // change later
+                'status'     => 'active',               // ✅ REQUIRED
+                'active'     => true,
+            ]
+        );
 
-        foreach ($roles as $role) {
-
-            // Create admin user
-            $user = User::create([
-                'name'     => ucfirst($role) . ' User',
-                'email'    => $role . '@gmail.com',
-                'password' => Hash::make('password'),
-                'status'   => 'active', // ✅ added
-            ]);
-
-            // Create role if it doesn't exist
-            $roleModel = Role::firstOrCreate(['name' => $role]);
-
-            // Assign role
-            $user->assignRole($roleModel);
-        }
+        $admin->assignRole('admin');
     }
 }
