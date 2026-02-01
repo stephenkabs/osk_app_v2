@@ -270,5 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 600);
 });
 </script>
+  @include('includes.modals.success')
+    @include('includes.modals.error')
 </body>
 </html>
