@@ -18,12 +18,13 @@ class PropertyController extends Controller
         // $this->middleware('permission:property.manage');
     }
 
-    public function index()
-    {
-        // Show only properties owned by logged-in user
-        $properties = Property::where('user_id', auth()->id())->latest()->paginate(12);
-        return view('properties.index', compact('properties'));
-    }
+public function index()
+{
+    $properties = Property::latest()->paginate(12);
+
+    return view('properties.index', compact('properties'));
+}
+
 
     public function create()
     {
