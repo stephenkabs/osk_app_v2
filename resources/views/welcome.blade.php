@@ -63,7 +63,7 @@
 
     <!-- IMAGE -->
     <div class="w-full md:w-1/2 h-56 md:h-auto">
-        <img src="/welcome/image.webp"
+        <img src="/placeholder.webp"
              alt="OneSquareK Housing"
              class="object-cover h-full w-full">
     </div>
@@ -119,7 +119,7 @@
     <hr class="my-4 border-white border-opacity-20">
 
     <p class="text-[10px] font-medium text-gray-400">
-        Powered by OneSquareK Properties · Version 1.0.0
+        Powered by Neurasofts Technologies · Version 1.0.0
     </p>
 </div>
 
@@ -135,7 +135,7 @@
 </script>
 
 <!-- PWA INSTALL SCRIPT -->
-<script>
+{{-- <script>
     let deferredPrompt;
     const installBtn = document.getElementById('installAppBtn');
     installBtn.style.display = 'none';
@@ -177,6 +177,28 @@
         installBtn.innerHTML = "<i class='fa-solid fa-check'></i> Installed";
         installBtn.disabled = true;
     });
+</script> --}}
+
+<script>
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+});
+function installApp() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(() => deferredPrompt = null);
+    }
+}
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js');
+    });
+}
 </script>
 
 </body>

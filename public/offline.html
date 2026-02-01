@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Offline • OSK</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #202020;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+                         "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            text-align: center;
+        }
+
+        .card {
+            background: rgba(109, 1, 1, 0.06);
+            backdrop-filter: blur(12px);
+            border-radius: 22px;
+            padding: 32px;
+            max-width: 380px;
+            box-shadow: 0 30px 80px rgba(118, 11, 11, 0.35);
+        }
+
+        h2 {
+            margin-bottom: 8px;
+        }
+
+        p {
+            opacity: .85;
+            font-size: 14px;
+        }
+
+        .retry {
+            margin-top: 20px;
+            background: #310303;
+            border: 1px solid #232323;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 999px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>You're Offline</h2>
+    <p>
+        No internet connection detected.<br>
+        Please check your network and try again.
+    </p>
+
+    <button class="retry" onclick="location.reload()">
+        Retry Connection
+    </button>
+</div>
+
+</body>
+</html>
