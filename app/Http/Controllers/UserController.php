@@ -69,7 +69,7 @@ class UserController extends Controller
         // }
 
         $user = User::create([
-            'name' => $request->first_name,
+            'name' => $request->name,
             'email' => $request->email,
             // 'image' => $profileImage,
             'password' => Hash::make($request->password),
@@ -140,7 +140,7 @@ class UserController extends Controller
         $user->update($data);
         $user->syncRoles($request->roles);
 
-        return redirect('user')->with('success', 'Role created successfully!');
+        return redirect('users.index')->with('success', 'Role created successfully!');
     }
 
     /**
