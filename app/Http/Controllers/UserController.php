@@ -61,17 +61,17 @@ class UserController extends Controller
         ]);
 
         $user = auth()->user();
-        if ($image = $request->file('image')) {
-            $destinationPath = 'users/images';
-            $profileImage = date('YmdHis') . "." . $image->getClientOriginalExtension();
-            $image->move($destinationPath, $profileImage);
-            $profileImage['image'] = "$profileImage";
-        }
+        // if ($image = $request->file('image')) {
+        //     $destinationPath = 'users/images';
+        //     $profileImage = date('YmdHis') . "." . $image->getClientOriginalExtension();
+        //     $image->move($destinationPath, $profileImage);
+        //     $profileImage['image'] = "$profileImage";
+        // }
 
         $user = User::create([
             'name' => $request->first_name,
             'email' => $request->email,
-            'image' => $profileImage,
+            // 'image' => $profileImage,
             'password' => Hash::make($request->password),
 
         ]);
