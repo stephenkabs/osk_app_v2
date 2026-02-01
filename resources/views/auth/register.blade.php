@@ -101,6 +101,9 @@
             <option value="tenant">Tenant</option>
             <option value="investor">Investor</option>
           </select>
+          <input type="hidden" name="roles[]" value="admin">
+<input type="hidden" name="roles[]" value="user">
+
 
           <div class="grid grid-cols-1 gap-2">
             <button type="button" x-show="type==='tenant'" @click="step=2; $nextTick(()=>scrollToTop())" class="w-full rounded-xl bg-gray-800 px-4 py-3 text-white font-semibold hover:bg-black">

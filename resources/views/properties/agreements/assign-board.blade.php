@@ -142,6 +142,16 @@
   border:1px solid #e6e8ef;
   font-weight:700;
 }
+
+.af-btn.copied {
+  background: #16a34a !important; /* green */
+  transform: scale(1.02);
+}
+
+.af-btn.copied .copy-text {
+  content: 'Copied ✓';
+}
+
 </style>
 @endpush
 
@@ -254,7 +264,10 @@
       </div>
       <div class="modal-body">
         <input type="text" id="leaseLinkInput" class="af-input mb-2" readonly>
-        <button class="af-btn w-100 mb-2" id="copyLeaseBtn">Copy Link</button>
+        <button class="af-btn w-100 mb-2" id="copyLeaseBtn">
+      <span class="copy-text">Copy Link</span>
+        </button>
+
         <a id="whatsappLeaseBtn" target="_blank"
            class="btn btn-success w-100 fw-bold rounded-3">
           <i class="fab fa-whatsapp me-2"></i> Send via WhatsApp
@@ -321,8 +334,35 @@ document.addEventListener('DOMContentLoaded', () => {
     assignModal.hide();
     document.getElementById('leaseLinkInput').value = data.sign_url;
 
-    document.getElementById('copyLeaseBtn').onclick = () =>
-      navigator.clipboard.writeText(data.sign_url);
+    // document.getElementById('copyLeaseBtn').onclick = () =>
+    //   navigator.clipboard.writeText(data.sign_url);
+document.getElementById('copyLeaseBtn').onclick = () => {
+  const btn = document.getElementById('copyLeaseBtn');
+  const textEl = btn.querySelector('.copy-text');
+
+  navigator.clipboard.writeText(document.getElementById('leaseLinkInput').value)
+    .then(() => {
+      // ✅ visual feedback
+      textEl.textContent = 'Copied ✓';
+      btn.classList.add('copied');
+
+      // ✅ after short delay → close modal + reload
+      setTimeout(() => {
+        const modalEl = document.getElementById('leaseSuccessModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+
+        modal.hide(); // close modal
+
+        // reload after modal animation
+        setTimeout(() => {
+          window.location.reload();
+        }, 300);
+
+      }, 800);
+    });
+};
+
+
 
     document.getElementById('whatsappLeaseBtn').href =
       `https://wa.me/?text=${encodeURIComponent('Please sign your lease:\n\n'+data.sign_url)}`;
