@@ -80,7 +80,7 @@ class UserController extends Controller
 
         $user->syncRoles($request->roles);
 
-        return redirect('user')->with('status', 'Role created successfully!');
+        return redirect('user')->with('success', 'Role created successfully!');
     }
 
     public function approve(User $user)
@@ -142,7 +142,7 @@ class UserController extends Controller
         $user->update($data);
         $user->syncRoles($request->roles);
 
-        return redirect('user')->with('status', 'Role created successfully!');
+        return redirect('user')->with('success', 'Role created successfully!');
     }
 
     /**
@@ -152,7 +152,7 @@ class UserController extends Controller
     {
         $user->delete();
 
-        return redirect()->route('users.index')->with('status','User deleted successfully');
+        return redirect()->route('users.index')->with('success','User deleted successfully');
     }
 
 
