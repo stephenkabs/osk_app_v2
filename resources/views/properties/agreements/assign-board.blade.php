@@ -152,6 +152,43 @@
   content: 'Copied ✓';
 }
 
+/* ===============================
+   🍎 SCROLLABLE PANELS
+================================ */
+
+/* Same visual height on both sides */
+.lease-panel {
+  height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header stays fixed */
+.lease-panel-header {
+  flex-shrink: 0;
+}
+
+/* Scrollable body */
+.lease-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 6px;
+  scroll-behavior: smooth;
+}
+
+/* Nice Apple scrollbars */
+.lease-panel-body::-webkit-scrollbar {
+  width: 6px;
+}
+.lease-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,.18);
+  border-radius: 999px;
+}
+.lease-panel-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
 </style>
 @endpush
 
@@ -215,7 +252,7 @@
 
     {{-- RIGHT: UNITS --}}
     <div class="col-md-7">
-      <div class="apple-card">
+      {{-- <div class="apple-card">
         <h6 class="fw-bold mb-3">Available Units</h6>
 
         <div class="row g-3">
@@ -229,7 +266,28 @@
             </div>
           @endforeach
         </div>
-      </div>
+      </div> --}}
+      <div class="apple-card lease-panel">
+
+  <div class="lease-panel-header">
+    <h6 class="fw-bold mb-3">Available Units</h6>
+  </div>
+
+  <div class="lease-panel-body">
+    <div class="row g-3">
+      @foreach($units as $unit)
+        <div class="col-md-6">
+          <div class="drop-unit" data-unit="{{ $unit->id }}">
+            <strong>{{ $unit->code }}</strong>
+            <small>K{{ number_format($unit->rent_amount,2) }}</small>
+          </div>
+        </div>
+      @endforeach
+    </div>
+  </div>
+
+</div>
+
     </div>
 
   </div>
