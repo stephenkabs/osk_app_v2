@@ -9,9 +9,13 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Unit;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
+use App\Mail\LeaseSignedPdfMail;
+
 use App\Models\PropertyLeaseAgreement;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\SendLeaseForSignature;
 use Illuminate\Support\Str;
 
 class PropertyLeaseAgreementController extends Controller
@@ -36,6 +40,16 @@ class PropertyLeaseAgreementController extends Controller
 
 // PropertyLeaseAgreementController.php
 
+public function signedThankYou(Property $property, PropertyLeaseAgreement $agreement)
+{
+    abort_unless($agreement->property_id === $property->id, 404);
+
+    return view('properties.agreements.signed-thank-you', [
+        'property'  => $property,
+        'agreement' => $agreement,
+        'tenant'    => $agreement->tenant,
+    ]);
+}
 
 
 public function store(Request $request, Property $property)
@@ -167,15 +181,34 @@ return PropertyLeaseAgreement::create([
 
     });
 
-    return response()->json([
-        'success'  => true,
-        'lease_id' => $lease->id,
-'sign_url' => route(
-    'property.agreements.public.create',
-    $property->slug
-) . '?lease=' . $lease->slug,
+//     return response()->json([
+//         'success'  => true,
+//         'lease_id' => $lease->id,
+// 'sign_url' => route(
+//     'property.agreements.public.create',
+//     $property->slug
+// ) . '?lease=' . $lease->slug,
 
-    ]);
+//     ]);
+
+
+return response()->json([
+    'success'  => true,
+    'lease_id' => $lease->id,
+
+    // 🔗 Public signing link
+    'sign_url' => route(
+        'property.agreements.public.create',
+        $property->slug
+    ) . '?lease=' . $lease->slug,
+
+    // 📧 Email endpoint (THIS FIXES YOUR ERROR)
+    'send_email_url' => route(
+        'property.leases.send-email',
+        [$property->slug, $lease->id]
+    ),
+]);
+
 }
 
 public function assignBoard(Property $property)
@@ -302,6 +335,37 @@ public function publicCreate(Request $request, Property $property)
     );
 }
 
+
+
+public function sendLeaseEmail(Property $property, PropertyLeaseAgreement $lease)
+{
+    abort_unless($lease->property_id === $property->id, 404);
+
+    if ($lease->status !== 'pending') {
+        return response()->json([
+            'error' => 'Lease already signed.'
+        ], 422);
+    }
+
+    if (!$lease->tenant?->email) {
+        return response()->json([
+            'error' => 'Tenant has no email address.'
+        ], 422);
+    }
+
+    $signUrl = route(
+        'property.agreements.public.create',
+        $property->slug
+    ) . '?lease=' . $lease->slug;
+
+    Mail::to($lease->tenant->email)
+        ->send(new SendLeaseForSignature($property, $lease, $signUrl));
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Lease sent successfully.'
+    ]);
+}
 
 
 private function imageToDataUri(?string $storagePath): ?string
@@ -525,10 +589,14 @@ public function publicStore(Request $request, Property $property)
                 $lease->unit->update(['status' => 'occupied']);
             }
         });
+// 📧 Send signed lease PDF
+Mail::to($lease->tenant->email)
+    ->send(new LeaseSignedPdfMail($property, $lease));
 
-        return redirect()
-            ->route('property.agreements.pdf', [$property->slug, $lease->slug])
-            ->with('success', 'Lease signed successfully.');
+// Redirect to thank-you page
+// ✅ Simple redirect (like kyc.pending)
+return redirect()->route('properties.thankyou');
+
     }
 
     // ===============================
@@ -604,6 +672,18 @@ public function publicStore(Request $request, Property $property)
         ->route('property.agreements.pdf', [$property->slug, $agreement->slug])
         ->with('success', 'Lease application submitted successfully.');
 }
+
+
+public function thankYou(Property $property, PropertyLeaseAgreement $agreement)
+{
+    return view('properties.thank-you', [
+        'property'  => $property,
+        'agreement' => $agreement,
+        'tenant'    => $agreement->tenant,
+    ]);
+}
+
+
 
 
 

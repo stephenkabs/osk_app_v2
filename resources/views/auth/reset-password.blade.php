@@ -33,7 +33,7 @@
       placeholder="Confirm password"
       class="w-full rounded-xl border px-4 py-3 text-sm">
 
-    <button class="w-full rounded-xl bg-[#097204] py-3 text-sm font-semibold text-white">
+    <button class="w-full rounded-xl bg-[#272727] py-3 text-sm font-semibold text-white">
       Reset Password
     </button>
   </form>

@@ -187,6 +187,72 @@
 .lease-panel-body::-webkit-scrollbar-track {
   background: transparent;
 }
+.af-btn-outline{
+  border:1px solid #e6e8ef;
+  background:#fff;
+  color:#0b0c0f;
+  border-radius:12px;
+  padding:8px 14px;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  transition:.18s ease;
+}
+
+.af-btn-outline:hover{
+  background:#f4f4f5;
+}
+
+.af-btn-outline.copied{
+  background:#16a34a;
+  color:#fff;
+  border-color:#16a34a;
+}
+
+.af-btn-outline{
+  border:1px solid #e6e8ef;
+  background:#fff;
+  border-radius:12px;
+  padding:6px 14px;
+  font-weight:700;
+  font-size:13px;
+  transition:.15s ease;
+}
+
+.af-btn-outline:hover{
+  background:#f9fafb;
+}
+
+.af-btn-outline.copied{
+  background:#16a34a;
+  color:#fff;
+  border-color:#16a34a;
+}
+
+/* 🔍 Search chip */
+.tenant-search-chip{
+  width:220px;
+  padding:8px 14px;
+  border-radius:999px;            /* pill */
+  border:1px solid #e6e8ef;
+  background:#ffffff;             /* white chip */
+  font-size:13px;
+  font-weight:600;
+  box-shadow:0 4px 14px rgba(0,0,0,.05);
+  transition:.18s ease;
+}
+
+.tenant-search-chip::placeholder{
+  color:#9ca3af;
+  font-weight:500;
+}
+
+.tenant-search-chip:focus{
+  outline:none;
+  border-color:#6366f1;
+  box-shadow:0 6px 20px rgba(99,102,241,.18);
+}
 
 
 </style>
@@ -195,9 +261,38 @@
 @section('content')
 
 <div class="container-fluid">
-  <h3 class="fw-bold mb-4">
-    Assign Lease • {{ $property->property_name }}
-  </h3>
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+
+  <!-- TITLE -->
+  <div>
+    <h3 class="fw-bold mb-0">
+      Assign Lease
+      <span class="text-muted fw-normal">• {{ $property->property_name }}</span>
+    </h3>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="d-flex align-items-center gap-2">
+
+    <!-- SEARCH -->
+<input
+  type="text"
+  id="tenantSearch"
+  class="tenant-search-chip"
+  placeholder="Search tenant…"
+/>
+
+
+    <!-- COPY LINK -->
+    <button id="copyLinkBtn" class="af-btn-outline d-flex align-items-center gap-1">
+      <i class="fas fa-copy"></i>
+      <span class="btn-text">Copy</span>
+    </button>
+
+  </div>
+</div>
+
+
 
   <div class="row g-4">
 
@@ -214,14 +309,25 @@
             @endphp
 
             {{-- TENANT WITH UNIT --}}
-            @if($lease && $lease->unit)
-              <div class="drag-tenant bg-light" draggable="false">
-                <i class="fas fa-home text-success"></i>
-                <div class="flex-grow-1">
-                  <div>{{ $tenant->name }}</div>
-                  <div class="tenant-meta">Unit {{ $lease->unit->code }}</div>
-                </div>
-              </div>
+     {{-- TENANT WITH UNIT --}}
+@if($lease && $lease->unit)
+  <a href="{{ route('property.users.show', [$property->slug, $tenant->slug]) }}"
+     class="text-decoration-none text-dark">
+
+    <div class="drag-tenant bg-light" draggable="false">
+      <i class="fas fa-home text-success"></i>
+      <div class="flex-grow-1">
+        <div>{{ $tenant->name }}
+
+        </div>
+        <div class="tenant-meta">
+          Unit {{ $lease->unit->code }} • View profile
+        </div>
+      </div>
+    </div>
+
+  </a>
+
 
             {{-- TENANT PENDING --}}
             @elseif($lease)
@@ -235,6 +341,7 @@
 
             {{-- FREE TENANT --}}
             @else
+              <a href="{{ route('property.users.show', [$property->slug, $tenant->slug]) }}">
               <div class="drag-tenant"
                    draggable="true"
                    data-user="{{ $tenant->id }}">
@@ -243,6 +350,7 @@
                   <div>{{ $tenant->name }}</div>
                 </div>
               </div>
+              </a>
             @endif
 
           @endforeach
@@ -326,16 +434,18 @@
       <span class="copy-text">Copy Link</span>
         </button>
 
-        <a id="whatsappLeaseBtn" target="_blank"
-           class="btn btn-success w-100 fw-bold rounded-3">
-          <i class="fab fa-whatsapp me-2"></i> Send via WhatsApp
-        </a>
+<button
+  id="sendLeaseEmailBtn"
+  class="btn btn-primary w-100 fw-bold rounded-3">
+  <i class="fas fa-envelope me-2"></i> Send via Email
+</button>
+
       </div>
     </div>
   </div>
 </div>
 
-@push('scripts')
+{{-- @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -429,7 +539,216 @@ document.getElementById('copyLeaseBtn').onclick = () => {
   };
 
 });
+
+
+// SEND LEASE VIA EMAIL
+document.getElementById('sendLeaseEmailBtn').onclick = async () => {
+  const btn = document.getElementById('sendLeaseEmailBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Sending...';
+
+  try {
+    const res = await fetch(
+      data.send_email_url, // 👈 we’ll pass this from backend
+      {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      alert(result.error || 'Failed to send email');
+      return;
+    }
+
+    btn.innerHTML = '<i class="fas fa-check me-2"></i> Email Sent';
+
+    // close modal + reload board
+    setTimeout(() => {
+      const modalEl = document.getElementById('leaseSuccessModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      modal.hide();
+
+      setTimeout(() => window.location.reload(), 300);
+    }, 900);
+
+  } catch (e) {
+    alert('Network error while sending email');
+  }
+};
+
+</script>
+@endpush --}}
+
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  let draggedUser = null;
+  let targetUnit  = null;
+  let sendEmailUrl = null; // ✅ store email URL safely
+
+  const assignModal  = new bootstrap.Modal(document.getElementById('assignLeaseModal'));
+  const successModal = new bootstrap.Modal(document.getElementById('leaseSuccessModal'));
+
+  // ===============================
+  // DRAG TENANT
+  // ===============================
+  document.querySelectorAll('.drag-tenant[draggable="true"]').forEach(el => {
+    el.addEventListener('dragstart', () => {
+      draggedUser = el.dataset.user;
+    });
+  });
+
+  // ===============================
+  // DROP UNIT
+  // ===============================
+  document.querySelectorAll('.drop-unit').forEach(unit => {
+    unit.addEventListener('dragover', e => {
+      e.preventDefault();
+      unit.classList.add('drag-over');
+    });
+
+    unit.addEventListener('dragleave', () => {
+      unit.classList.remove('drag-over');
+    });
+
+    unit.addEventListener('drop', () => {
+      unit.classList.remove('drag-over');
+      if (!draggedUser) return;
+
+      targetUnit = unit;
+      document.getElementById('leaseStartDate').value = '';
+      assignModal.show();
+    });
+  });
+
+  // ===============================
+  // CONFIRM ASSIGN
+  // ===============================
+  document.getElementById('confirmAssignBtn').onclick = async () => {
+    const startDate = document.getElementById('leaseStartDate').value;
+    if (!startDate || !draggedUser || !targetUnit) return;
+
+    const res = await fetch("{{ route('property.lease.assign.api', $property->slug) }}", {
+      method: 'POST',
+      headers: {
+        'Content-Type':'application/json',
+        'X-CSRF-TOKEN':'{{ csrf_token() }}',
+        'Accept':'application/json'
+      },
+      body: JSON.stringify({
+        user_id: draggedUser,
+        unit_id: targetUnit.dataset.unit,
+        start_date: startDate
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Failed');
+      return;
+    }
+
+    // ✅ Save email URL
+    sendEmailUrl = data.send_email_url;
+
+    assignModal.hide();
+
+    document.getElementById('leaseLinkInput').value = data.sign_url;
+
+    // ===============================
+    // COPY LINK
+    // ===============================
+    document.getElementById('copyLeaseBtn').onclick = () => {
+      const btn = document.getElementById('copyLeaseBtn');
+      const textEl = btn.querySelector('.copy-text');
+
+      navigator.clipboard.writeText(data.sign_url).then(() => {
+        textEl.textContent = 'Copied ✓';
+        btn.classList.add('copied');
+      });
+    };
+
+    // ===============================
+    // SEND EMAIL
+    // ===============================
+    document.getElementById('sendLeaseEmailBtn').onclick = async () => {
+      const btn = document.getElementById('sendLeaseEmailBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Sending...';
+
+      try {
+        const res = await fetch(sendEmailUrl, {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN':'{{ csrf_token() }}',
+            'Accept':'application/json'
+          }
+        });
+
+        const result = await res.json();
+        if (!res.ok) {
+          alert(result.error || 'Failed to send email');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-envelope me-2"></i> Send via Email';
+          return;
+        }
+
+        btn.innerHTML = '<i class="fas fa-check me-2"></i> Email Sent';
+
+        setTimeout(() => {
+          successModal.hide();
+          setTimeout(() => window.location.reload(), 300);
+        }, 900);
+
+      } catch (e) {
+        alert('Network error');
+      }
+    };
+
+    // ✅ SHOW MODAL (THIS WAS NEVER RUNNING BEFORE)
+    successModal.show();
+  };
+
+});
 </script>
 @endpush
+
+<script>
+document.getElementById('copyLinkBtn')?.addEventListener('click', function () {
+  const btn = this;
+  const text = "{{ route('property.users.public.create', $property->slug) }}";
+
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('copied');
+    btn.querySelector('.btn-text').textContent = 'Copied ✓';
+
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.querySelector('.btn-text').textContent = 'Copy';
+    }, 1500);
+  });
+});
+</script>
+
+<script>
+document.getElementById('tenantSearch').addEventListener('keyup', function () {
+  const keyword = this.value.toLowerCase();
+  const tenants = document.querySelectorAll('#tenantList .drag-tenant');
+
+  tenants.forEach(tenant => {
+    const name = tenant.textContent.toLowerCase();
+    tenant.style.display = name.includes(keyword) ? '' : 'none';
+  });
+});
+</script>
+
 
 @endsection

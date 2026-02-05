@@ -11,6 +11,8 @@ use Jenssegers\Agent\Agent;
 use App\Models\PropertyPayment;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\TenantApplicationReceived;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Auth\Events\Registered;
@@ -85,6 +87,20 @@ class PropertyUserController extends Controller
         return view('auth.public_register', compact('properties'));
     }
 
+
+    public function updateOccupancyDates(Request $request, Property $property, User $user)
+{
+    $data = $request->validate([
+        'arrived_date' => ['nullable', 'date'],
+        'leave_date'   => ['nullable', 'date', 'after_or_equal:arrived_date'],
+    ]);
+
+    $user->update($data);
+
+    return back()->with('success', 'Occupancy dates updated');
+}
+
+
     /**
      * Public signup store
      */
@@ -114,6 +130,10 @@ public function publicStore(Request $request, Property $property)
     // Create tenant account
     $user = \App\Models\User::create($data);
     $user->assignRole('tenant');
+
+        // 📧 SEND WELCOME / APPLICATION EMAIL
+    Mail::to($user->email)
+        ->send(new TenantApplicationReceived($user, $property));
 
     // ✅ Redirect directly to public lease agreement creation
 // ✅ Redirect directly to public lease agreement creation
@@ -449,49 +469,168 @@ if ($latestSignedLease) {
 
         $user->update($data);
 
-        return redirect()->route('properties.users.index', $property->slug)
-                         ->with('success','User updated successfully!');
+return redirect()
+    ->route('property.users.show', [$property->slug, $user->slug])
+    ->with('success', 'User updated successfully!');
+
     }
 
-  public function updateKyc(Request $request, User $user)
+//   public function updateKyc(Request $request, User $user)
+// {
+//     $request->validate([
+//         'kyc_status' => ['required','in:pending,approved,rejected'],
+//     ]);
+
+//     // ✅ Update local KYC status
+//     $user->update([
+//         'kyc_status' => $request->input('kyc_status'),
+//     ]);
+
+//     // ✅ Push to QuickBooks via Make webhook if approved
+//     if ($user->kyc_status === 'approved') {
+//         try {
+//             $response = Http::post(config('services.make.webhook_url_kyc'), [
+//                 'name'      => $user->name,
+//                 'email'     => $user->email,
+//                 'address'   => $user->address,
+//                 'city'      => $user->city,
+//                 'country'   => $user->country,
+//                 'phone'     => $user->whatsapp_phone,
+//                 'kycStatus' => $user->kyc_status,
+//             ]);
+
+//             if ($response->successful()) {
+//                 $data = $response->json();
+
+//                 if (isset($data['quickbooks_customer_id'])) {
+//                     $user->update([
+//                         'quickbooks_customer_id' => $data['quickbooks_customer_id']
+//                     ]);
+//                 }
+//             }
+//         } catch (\Exception $e) {
+//             Log::error("QuickBooks sync failed for user {$user->id}: " . $e->getMessage());
+//         }
+//     }
+
+//     return back()->with('success', "KYC status for {$user->name} updated to {$user->kyc_status}.");
+// }
+
+
+
+
+
+
+
+
+
+
+public function updateKyc(Request $request, User $user)
 {
     $request->validate([
         'kyc_status' => ['required','in:pending,approved,rejected'],
     ]);
 
-    // ✅ Update local KYC status
     $user->update([
-        'kyc_status' => $request->input('kyc_status'),
+        'kyc_status' => $request->kyc_status,
     ]);
 
-    // ✅ Push to QuickBooks via Make webhook if approved
-    if ($user->kyc_status === 'approved') {
-        try {
-            $response = Http::post(config('services.make.webhook_url_kyc'), [
-                'name'      => $user->name,
-                'email'     => $user->email,
-                'address'   => $user->address,
-                'city'      => $user->city,
-                'country'   => $user->country,
-                'phone'     => $user->whatsapp_phone,
-                'kycStatus' => $user->kyc_status,
-            ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-
-                if (isset($data['quickbooks_customer_id'])) {
-                    $user->update([
-                        'quickbooks_customer_id' => $data['quickbooks_customer_id']
-                    ]);
-                }
-            }
-        } catch (\Exception $e) {
-            Log::error("QuickBooks sync failed for user {$user->id}: " . $e->getMessage());
-        }
+    if ($user->kyc_status !== 'approved') {
+        return back()->with(
+            'success',
+            "KYC status for {$user->name} updated to {$user->kyc_status}."
+        );
     }
 
-    return back()->with('success', "KYC status for {$user->name} updated to {$user->kyc_status}.");
+    // 🔹 STEP 1: find lease (optional)
+    $lease = $user->leaseAgreements()
+        ->whereIn('status', ['pending','active'])
+        ->whereNotNull('start_date')
+        ->latest('created_at')
+        ->first();
+
+    // 🔹 STEP 2: build payload (ALWAYS send)
+    $payload = [
+        'name'      => $user->name,
+        'email'     => $user->email,
+        'phone'     => $user->whatsapp_phone,
+        'address'   => $user->address,
+        'city'      => $user->city,
+        'country'   => $user->country,
+        'kycStatus' => 'approved',
+    ];
+
+    // 🔹 STEP 3: attach lease + proration ONLY if lease exists
+    if ($lease) {
+        $monthlyRent = (float) (
+            $lease->rent_amount
+            ?? optional($lease->unit)->rent_amount
+            ?? 0
+        );
+
+        $proration = $this->calculateProratedRent(
+            $monthlyRent,
+            $lease->start_date
+        );
+
+        $payload['lease'] = [
+            'start_date'      => $lease->start_date,
+            'monthly_rent'    => $monthlyRent,
+            'prorated_rent'   => $proration['prorated_rent'],
+            'proration_days' => $proration['proration_days'],
+            'days_in_month'  => $proration['days_in_month'],
+            'invoice_month'  => $proration['invoice_month'],
+        ];
+    }
+
+    // 🔹 STEP 4: fire webhook (ALWAYS)
+    try {
+        $response = Http::post(
+            config('services.make.webhook_url_kyc'),
+            $payload
+        );
+
+        if ($response->successful()) {
+            $data = $response->json();
+
+            if (!empty($data['quickbooks_customer_id'])) {
+                $user->update([
+                    'quickbooks_customer_id' => $data['quickbooks_customer_id'],
+                ]);
+            }
+        }
+    } catch (\Throwable $e) {
+        Log::error(
+            "QuickBooks sync failed for user {$user->id}: {$e->getMessage()}"
+        );
+    }
+
+    return back()->with(
+        'success',
+        "KYC status for {$user->name} updated to approved."
+    );
+}
+
+private function calculateProratedRent(
+    float $monthlyRent,
+    string $startDate
+): array {
+    $start = Carbon::parse($startDate);
+
+    $daysInMonth = $start->daysInMonth;
+    $remainingDays = ($daysInMonth - $start->day) + 1;
+
+    $proratedAmount = round(
+        ($remainingDays / $daysInMonth) * $monthlyRent,
+        2
+    );
+
+    return [
+        'prorated_rent'   => $proratedAmount,
+        'proration_days' => $remainingDays,
+        'days_in_month'  => $daysInMonth,
+        'invoice_month'  => $start->format('Y-m'),
+    ];
 }
 
 

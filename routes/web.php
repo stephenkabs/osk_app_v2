@@ -109,6 +109,10 @@ Route::prefix('properties/{property}')
         ])->name('property.rent.summary');
 
     });
+Route::post(
+    '/properties/{property}/leases/{lease}/send-email',
+    [PropertyLeaseAgreementController::class, 'sendLeaseEmail']
+)->name('property.leases.send-email');
 
 
 
@@ -444,11 +448,22 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 });
 
 
+Route::put(
+  'properties/{property}/users/{user}/occupancy-dates',
+  [PropertyUserController::class, 'updateOccupancyDates']
+)->name('property.users.occupancy-dates');
+
+
+
 
     Route::get('/kyc/pending', function () {
     return view('kyc.pending');
 })->name('kyc.pending');
 
+Route::get(
+    '/properties/{property}/agreements/{agreement}',
+    [PropertyLeaseAgreementController::class, 'signedThankYou']
+)->name('property.agreements.thankyou');
 
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
@@ -458,6 +473,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/settings/login-hero', [LoginHeroController::class, 'store'])
         ->name('login-hero.store');
 });
+
+Route::get('/lease/thank-you', [PropertyLeaseAgreementController::class, 'thankYou'])
+    ->name('properties.thankyou');
+
 
 
 

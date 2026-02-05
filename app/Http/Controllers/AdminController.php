@@ -197,43 +197,84 @@ $month = $request->get('month', now()->format('Y-m'));
 
 $rows = [];
 $totals = [
-    'lettable' => 0,
+    'lettable' => Unit::where('property_id', $property->id)->sum('rent_amount'),
     'rent'     => 0,
     'paid'     => 0,
     'overdue'  => 0,
+    'balance'  => 0,
+    'empty'    => 0, // ✅ ADD THIS
 ];
 
-if ($property) {
 
-    $leases = PropertyLeaseAgreement::with(['user', 'unit', 'payments'])
-        ->where('property_id', $property->id)
-        ->whereIn('status', ['pending','active'])
-        ->get();
-
-    foreach ($leases as $lease) {
-        $rent = $lease->rent_amount;
-        $paid = $lease->payments
-            ->where('payment_month', $month)
-            ->sum('amount');
-
-        $overdue = max($rent - $paid, 0);
-
-        $rows[] = [
-            'room'       => optional($lease->unit)->code,
-            'tenant'     => optional($lease->user)->name,
-            'lease'      => 'Yes',
-            'entry_date' => $lease->start_date,
-            'rent'       => $rent,
-            'paid'       => $paid,
-            'overdue'    => $overdue,
-            'balance'    => $overdue,
-        ];
-
-        $totals['rent'] += $rent;
-        $totals['paid'] += $paid;
-        $totals['overdue'] += $overdue;
+/* ===============================
+   LEASED ROOMS
+=============================== */
+$leases = PropertyLeaseAgreement::with([
+    'user',
+    'unit',
+    'payments' => function ($q) use ($month) {
+        $q->where('payment_month', $month);
     }
+])
+->where('property_id', $property->id)
+->whereIn('status', ['pending','active'])
+->get();
+
+foreach ($leases as $lease) {
+
+    $rent = (float) $lease->rent_amount;
+    $paid = (float) $lease->payments->sum('amount');
+    $overdue = max($rent - $paid, 0);
+
+    $rows[] = [
+        'room'       => optional($lease->unit)->code ?? '—',
+        'tenant'     => optional($lease->user)->name ?? '—',
+        'lease'      => $lease,
+        'entry_date' => $lease->start_date,
+        'rent'       => $rent,
+        'paid'       => $paid,
+        'overdue'    => $overdue,
+        'balance'    => $overdue,
+    ];
+
+
+
+    // Other totals
+    $totals['rent']    += $rent;
+    $totals['paid']    += $paid;
+    $totals['overdue'] += $overdue;
+    $totals['balance'] += $overdue;
 }
+
+
+/* ===============================
+   EMPTY ROOMS
+=============================== */
+$occupiedUnitIds = $leases
+    ->pluck('unit_id')
+    ->filter()
+    ->values();
+
+$emptyUnits = Unit::where('property_id', $property->id)
+    ->whereNotIn('id', $occupiedUnitIds)
+    ->get();
+
+foreach ($emptyUnits as $unit) {
+
+    $rows[] = [
+        'room'       => $unit->code,
+        'tenant'     => '—',
+        'lease'      => null, // 👈 IMPORTANT
+        'entry_date' => null,
+        'rent'       => (float) ($unit->rent_amount ?? 0),
+        'paid'       => 0,
+        'overdue'    => 0,
+        'balance'    => 0,
+    ];
+
+    $totals['empty'] += (float) ($unit->rent_amount ?? 0);
+}
+
 return view('dashboard.index', compact(
     'user',
     'pendingClientsCount',

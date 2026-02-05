@@ -332,6 +332,20 @@
                 {{ $activeLease ? 'Active' : 'Not Assigned' }}
               </div>
             </div>
+            <div class="col-6">
+  <div class="kv-label">Arrived</div>
+  <div class="kv-value">
+    {{ $user->arrived_date ? \Carbon\Carbon::parse($user->arrived_date)->format('d M Y') : '—' }}
+  </div>
+</div>
+
+<div class="col-6">
+  <div class="kv-label">Left</div>
+  <div class="kv-value">
+    {{ $user->leave_date ? \Carbon\Carbon::parse($user->leave_date)->format('d M Y') : '—' }}
+  </div>
+</div>
+
           </div>
         </div>
       </div>
@@ -380,13 +394,10 @@
       @else
 
         {{-- START LEASE --}}
-        <a href="{{ route('property.agreements.public.create', [
-            'property' => $property->slug,
-            'user'     => $user->id
-        ]) }}"
+        <a href="#"
            target="_blank"
            class="af-btn-outline">
-          <i class="fas fa-file-signature"></i> Start Lease
+          <i class="fas fa-file-signature"></i> No lease signed
         </a>
 
 
@@ -418,6 +429,14 @@
           Sync to QBO
         </button>
       @endif
+      <button type="button"
+        class="af-btn-outline"
+        data-bs-toggle="modal"
+        data-bs-target="#occupancyDatesModal">
+  <i class="fas fa-calendar-alt"></i>
+  Occupancy Dates
+</button>
+
 
     </div>
 
@@ -513,14 +532,14 @@
     </div>
 
     <div class="mt-3">
-      <a href="{{ route('property.agreements.public.create', [
+      {{-- <a href="{{ route('property.agreements.public.create', [
           'property' => $property->slug,
           'user'     => $user->id
       ]) }}"
          target="_blank"
          class="af-btn-outline">
         <i class="fas fa-file-signature"></i> Start Lease Agreement
-      </a>
+      </a> --}}
     </div>
   </div>
 @endif
@@ -997,6 +1016,61 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+<div class="modal fade modal-apple" id="occupancyDatesModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+    <div class="modal-content">
+
+      <div class="modal-header border-0">
+        <h5 class="fw-bold mb-0">Tenant Occupancy</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form method="POST"
+            action="{{ route('property.users.occupancy-dates', [$property->slug, $user->slug]) }}">
+        @csrf
+        @method('PUT')
+
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label class="small fw-bold">Actual Arrival Date</label>
+            <input type="date"
+                   name="arrived_date"
+                   class="af-input"
+                   value="{{ $user->arrived_date }}">
+          </div>
+
+          <div class="mb-3">
+            <label class="small fw-bold">Actual Leave Date</label>
+            <input type="date"
+                   name="leave_date"
+                   class="af-input"
+                   value="{{ $user->leave_date }}">
+          </div>
+
+          <p class="small text-muted mb-0">
+            These dates represent when the tenant actually occupied the unit.
+          </p>
+
+        </div>
+
+        <div class="modal-footer border-0 d-flex justify-content-between">
+          <button type="button"
+                  class="btn btn-light soft-btn"
+                  data-bs-dismiss="modal">
+            Cancel
+          </button>
+
+          <button type="submit" class="af-btn">
+            <i class="fas fa-save me-1"></i>
+            Save
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
 
 
 

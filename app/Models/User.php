@@ -33,6 +33,9 @@ class User extends Authenticatable
         'profile_image',
         'kyc_status',
         'quickbooks_customer_id',
+           'arrived_date',
+    'leave_date',
+
     ];
 
     /**

@@ -103,7 +103,7 @@ class PropertyPaymentsController extends Controller
         $payloadQB = [
             'type'        => 'rent_payment',
             'payment_id'  => $payment->id,
-            'amount'      => $payment->amount,
+         'amount' => (int) round($payment->amount),
             'currency'    => 'ZMW',
             'payment_date'=> $payment->payment_date,
             'reference'   => $payment->reference,

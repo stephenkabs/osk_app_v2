@@ -62,15 +62,15 @@
 
       <input type="email" name="email" required
         placeholder="Email address"
-        class="w-full rounded-xl border px-4 py-3 text-sm focus:ring-2 focus:ring-[#155012]/80">
+        class="w-full rounded-xl border px-4 py-3 text-sm focus:ring-2 focus:ring-[#131313]/80">
 
-      <button class="w-full rounded-xl bg-[#097204] py-3 text-sm font-semibold text-white hover:bg-[#0b5a08]">
+      <button class="w-full rounded-xl bg-[#131313] py-3 text-sm font-semibold text-white hover:bg-[#131313]">
         Send Reset Link
       </button>
     </form>
 
     <div class="mt-5 text-center">
-      <a href="{{ route('login') }}" class="text-sm font-semibold text-[#155012] hover:underline">
+      <a href="{{ route('login') }}" class="text-sm font-semibold text-[#131313] hover:underline">
         Back to login
       </a>
     </div>

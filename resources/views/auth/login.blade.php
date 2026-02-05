@@ -174,11 +174,11 @@
 
         <input type="email" name="email" placeholder="Email"
           class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium
-          placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#155012]/80 focus:border-[#353535]" required>
+          placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#353535]/80 focus:border-[#353535]" required>
 
         <input type="password" name="password" placeholder="Password"
           class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium
-          placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#155012]/80 focus:border-[#353535]" required>
+          placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#353535]/80 focus:border-[#353535]" required>
 
         <button id="submit-btn" type="submit"
           class="w-full flex items-center justify-center gap-2 rounded-xl bg-[#353535] px-4 py-3 text-[15px] font-semibold text-white
