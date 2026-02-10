@@ -358,8 +358,13 @@ public function sendLeaseEmail(Property $property, PropertyLeaseAgreement $lease
         $property->slug
     ) . '?lease=' . $lease->slug;
 
-    Mail::to($lease->tenant->email)
-        ->send(new SendLeaseForSignature($property, $lease, $signUrl));
+dispatch(function () use ($property, $lease, $signUrl) {
+
+    (new \App\Mail\SendLeaseForSignature($property, $lease, $signUrl))
+        ->sendViaBrevo($lease->tenant->email);
+
+});
+
 
     return response()->json([
         'success' => true,
