@@ -16,7 +16,7 @@ class ResetPasswordNotification extends Notification
 
     public function via($notifiable)
     {
-        return ['mail']; // required but we override send
+        return ['mail'];   // keep mail channel
     }
 
     public function toMail($notifiable)
@@ -36,5 +36,7 @@ class ResetPasswordNotification extends Notification
             'Reset Password Notification',
             $html
         );
+
+        return null; // prevent Laravel SMTP sending
     }
 }
