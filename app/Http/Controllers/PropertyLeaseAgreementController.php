@@ -595,8 +595,30 @@ public function publicStore(Request $request, Property $property)
             }
         });
 // 📧 Send signed lease PDF
-Mail::to($lease->tenant->email)
-    ->send(new LeaseSignedPdfMail($property, $lease));
+dispatch(function () use ($property, $lease) {
+
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+        'properties.agreements.pdf',
+        [
+            'property'  => $property,
+            'agreement' => $lease,
+            'template'  => $property->leaseTemplate,
+        ]
+    )->setPaper('a4');
+
+    \App\Services\BrevoMailService::send(
+        $lease->tenant->email,
+        'Your Signed Lease Agreement',
+        view('emails.lease-signed', compact('property','lease'))->render(),
+        [
+            [
+                'name'    => 'Lease-'.$lease->slug.'.pdf',
+                'content' => base64_encode($pdf->output()),
+            ]
+        ]
+    );
+
+})->onQueue('emails');
 
 // Redirect to thank-you page
 // ✅ Simple redirect (like kyc.pending)
