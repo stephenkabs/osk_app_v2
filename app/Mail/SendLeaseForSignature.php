@@ -7,6 +7,7 @@ use App\Models\PropertyLeaseAgreement;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use App\Services\BrevoMailService;
 
 class SendLeaseForSignature extends Mailable
 {
@@ -22,5 +23,21 @@ class SendLeaseForSignature extends Mailable
     {
         return $this->subject('Lease Agreement – Signature Required')
             ->view('emails.send-lease');
+    }
+
+    /**
+     * Send this email using Brevo API
+     */
+    public function sendViaBrevo(string $email): void
+    {
+        BrevoMailService::send(
+            $email,
+            'Lease Agreement – Signature Required',
+            view('emails.send-lease', [
+                'property' => $this->property,
+                'lease'    => $this->lease,
+                'signUrl'  => $this->signUrl,
+            ])->render()
+        );
     }
 }

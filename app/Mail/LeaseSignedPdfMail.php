@@ -8,6 +8,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use App\Services\BrevoMailService;
 
 class LeaseSignedPdfMail extends Mailable
 {
@@ -43,5 +44,42 @@ class LeaseSignedPdfMail extends Mailable
                 'Lease-'.$this->agreement->slug.'.pdf',
                 ['mime' => 'application/pdf']
             );
+    }
+
+    /**
+     * Send using Brevo API (with attachment)
+     */
+    public function sendViaBrevo(string $email): void
+    {
+        $this->agreement->load(['tenant','unit','property']);
+
+        $template = $this->property->leaseTemplate;
+
+        $pdf = Pdf::loadView(
+            'properties.agreements.pdf',
+            [
+                'property'        => $this->property,
+                'agreement'       => $this->agreement,
+                'template'        => $template,
+                'logoData'        => null,
+                'sigData'         => null,
+                'tenantPhotoData' => null,
+            ]
+        )->setPaper('a4');
+
+        BrevoMailService::sendWithAttachment(
+            $email,
+            'Your Signed Lease Agreement',
+            view('emails.lease-signed', [
+                'property'  => $this->property,
+                'agreement' => $this->agreement,
+            ])->render(),
+            [
+                [
+                    'name'    => 'Lease-'.$this->agreement->slug.'.pdf',
+                    'content' => base64_encode($pdf->output()),
+                ]
+            ]
+        );
     }
 }

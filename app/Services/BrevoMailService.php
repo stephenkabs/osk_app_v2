@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Http;
 
 class BrevoMailService
 {
-    public static function send($to, $subject, $html)
+    public static function send($to, $subject, $html, $attachments = [])
     {
         return Http::withHeaders([
             'api-key' => config('services.brevo.api_key'),
@@ -22,6 +22,7 @@ class BrevoMailService
             ],
             'subject' => $subject,
             'htmlContent' => $html,
+            'attachment' => $attachments, // <-- important
         ]);
     }
 }
