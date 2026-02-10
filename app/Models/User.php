@@ -7,6 +7,7 @@ use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Notifications\Notifiable;
+use App\Notifications\ResetPasswordNotification;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Str;
 
@@ -89,6 +90,13 @@ class User extends Authenticatable
     {
         return 'slug';
     }
+
+
+    public function sendPasswordResetNotification($token)
+{
+    $this->notify(new ResetPasswordNotification($token));
+}
+
 
 
     public function merchants()
