@@ -132,8 +132,11 @@ public function publicStore(Request $request, Property $property)
     $user->assignRole('tenant');
 
         // 📧 SEND WELCOME / APPLICATION EMAIL
-    Mail::to($user->email)
-        ->send(new TenantApplicationReceived($user, $property));
+   /* EMAIL → BACKGROUND */
+dispatch(function () use ($user, $property) {
+    (new \App\Mail\TenantApplicationReceived($user, $property))
+        ->sendViaBrevo($user->email);
+});
 
     // ✅ Redirect directly to public lease agreement creation
 // ✅ Redirect directly to public lease agreement creation
