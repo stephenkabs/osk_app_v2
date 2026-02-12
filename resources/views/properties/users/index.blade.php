@@ -383,7 +383,7 @@ body {
     </div>
 
     <div class="mt-4">
-      {{ $users->links() }}
+      {{ $users->links('vendor.pagination.bootstrap-4') }}
     </div>
 
   </div>
