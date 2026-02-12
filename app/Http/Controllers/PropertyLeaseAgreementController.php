@@ -10,10 +10,11 @@ use App\Models\Unit;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 use App\Mail\LeaseSignedPdfMail;
-
+use App\Services\WirepickSmsService;
 use App\Models\PropertyLeaseAgreement;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SendLeaseForSignature;
 use Illuminate\Support\Str;
@@ -371,6 +372,55 @@ dispatch(function () use ($property, $lease, $signUrl) {
         'message' => 'Lease sent successfully.'
     ]);
 }
+
+
+
+
+
+
+public function sendLeaseSms(Property $property, PropertyLeaseAgreement $lease)
+{
+    abort_unless($lease->property_id === $property->id, 404);
+
+    if ($lease->status !== 'pending') {
+        return response()->json([
+            'error' => 'Lease already signed.'
+        ], 422);
+    }
+
+    if (!$lease->tenant?->whatsapp_phone) {
+        return response()->json([
+            'error' => 'Tenant has no phone number.'
+        ], 422);
+    }
+
+    $signUrl = route(
+        'property.agreements.public.create',
+        $property->slug
+    ) . '?lease=' . $lease->slug;
+
+    $message = "Hello {$lease->tenant->name},\n\n"
+        . "Your lease for {$property->property_name} is ready.\n"
+        . "Sign here:\n{$signUrl}\n\n"
+        . "- OneSquareK";
+
+    dispatch(function () use ($lease, $message) {
+        WirepickSmsService::send(
+            $lease->tenant->whatsapp_phone,
+            $message
+        );
+    });
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Lease SMS sent successfully.'
+    ]);
+}
+
+
+
+
+
 
 
 private function imageToDataUri(?string $storagePath): ?string

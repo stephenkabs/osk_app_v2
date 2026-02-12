@@ -213,19 +213,90 @@
     <!-- Properties -->
 
     <li>
-        <a href="/dashboard" class="{{ request()->is('wallet') ? 'active' : '' }}">
+        <a href="{{ route('dashboard.index') }}" class="{{ request()->is('dashboard.index') ? 'active' : '' }}">
       <i class="dripicons-device-desktop"></i>
             <span>Home</span>
         </a>
     </li>
 
-        <!-- Properties -->
-    {{-- <li>
-        <a href="/dashboard" class="{{ request()->is('wallet') ? 'active' : '' }}">
-            <i class="fas fa-building"></i>
-            <span>Properties</span>
+
+@if(isset($property))
+        <li>
+        <a href="{{ route('property.lease.assign.board', $property->slug) }}" class="{{ request()->is('dashboard.index') ? 'active' : '' }}">
+ <i class="fas fa-random"></i>
+            <span>Assign Lease</span>
         </a>
-    </li> --}}
+    </li>
+@endif
+
+
+@if(isset($property))
+        <li>
+        <a href="{{ route('property.users.index', $property->slug) }}" class="{{ request()->is('dashboard.index') ? 'active' : '' }}">
+            <i class="fas fa-users"></i>
+            <span>Tenants</span>
+        </a>
+    </li>
+@endif
+
+@if(isset($property))
+        <li>
+        <a href="{{ route('property.units.index', $property->slug) }}" class="{{ request()->is('dashboard.index') ? 'active' : '' }}">
+        <i class="fas fa-door-open"></i>
+            <span>Units</span>
+        </a>
+    </li>
+@endif
+
+@if(isset($property))
+        <li>
+        <a href="{{ route('property.agreements.index', $property->slug) }}" class="{{ request()->is('dashboard.index') ? 'active' : '' }}">
+           <i class="fas fa-file-signature"></i>
+            <span>Lease Agreements</span>
+        </a>
+    </li>
+@endif
+
+
+@if(isset($property))
+        <li>
+        <a href="{{ route('property.lease-template.edit', $property->slug) }}" class="{{ request()->is('dashboard.index') ? 'active' : '' }}">
+             <i class="fas fa-file-alt"></i>
+            <span>Lease Templates </span>
+        </a>
+    </li>
+@endif
+
+
+
+@if(isset($property))
+        <li>
+        <a href="{{ route('property.payments.index', $property->slug) }}" class="{{ request()->is('dashboard.index') ? 'active' : '' }}">
+               <i class="fas fa-credit-card"></i>
+            <span>Payments</span>
+        </a>
+    </li>
+@endif
+
+@if(isset($property))
+        <li>
+        <a href="{{ route('property.reports.index', $property->slug) }}" class="{{ request()->is('dashboard.index') ? 'active' : '' }}">
+               <i class="fas fa-chart-bar"></i>
+            <span>OSK Report</span>
+        </a>
+    </li>
+@endif
+
+
+
+
+        <!-- Properties -->
+    <li>
+        <a href="/properties" class="{{ request()->is('wallet') ? 'active' : '' }}">
+            <i class="fas fa-building"></i>
+            <span>OSK Building</span>
+        </a>
+    </li>
 
     <!-- Support / Help -->
     <li>
@@ -259,9 +330,9 @@
                     <a href="{{ route('users.show', auth()->user()->slug ?? '') }}">
                         <i class="fas fa-user"></i> My Profile
                     </a>
-                    {{-- <a href="{{ route('setting.index') }}">
+                    <a href="/admin/system-settings">
       <i class="fas fa-cog"></i> Settings
-    </a> --}}
+    </a>
                     <a href="#"
                         onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                         <i class="fas fa-power-off text-danger"></i> Logout

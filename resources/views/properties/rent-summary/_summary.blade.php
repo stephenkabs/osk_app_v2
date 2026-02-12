@@ -204,6 +204,17 @@
       </button>
     @endif
 
+    @if($lease->status === 'pending' && $lease->tenant?->whatsapp_phone)
+  <button
+    class="lease-btn lease-btn-sms send-lease-sms-btn"
+    data-url="{{ route('property.leases.send-sms', [$property->slug, $lease->id]) }}">
+    <i class="fas fa-sms"></i> SMS
+  </button>
+@endif
+
+
+
+
     {{-- STATUS TEXT --}}
     <div class="small mt-1 {{ $lease->status === 'active' ? 'text-success fw-bold' : 'text-muted' }}">
       {{ $lease->status === 'active' ? 'Signed' : 'Pending signature' }}
@@ -268,35 +279,41 @@ document.addEventListener('click', function (e) {
   });
 });
 </script>
+
 <script>
-document.addEventListener('click', async function (e) {
-  const btn = e.target.closest('.send-lease-btn');
+document.addEventListener('click', function (e) {
+
+  const btn = e.target.closest('.send-lease-sms-btn');
   if (!btn) return;
 
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Sending...';
 
-  const res = await fetch(btn.dataset.url, {
-    method: 'POST',
-    headers: {
-      'X-CSRF-TOKEN': '{{ csrf_token() }}',
-      'Accept': 'application/json'
-    }
+  fetch(btn.dataset.url, {
+      method: 'POST',
+      headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'Accept': 'application/json'
+      }
+  })
+  .then(res => res.json())
+  .then(data => {
+      if (data.success) {
+          btn.innerHTML = '<i class="fas fa-check me-1"></i> Sent';
+      } else {
+          btn.innerHTML = 'Error';
+      }
+  })
+  .catch(() => {
+      btn.innerHTML = 'Failed';
   });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    alert(data.error || 'Failed to send lease');
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-envelope me-1"></i> Send Lease';
-    return;
-  }
-
-  btn.classList.remove('btn-outline-primary');
-  btn.classList.add('btn-success');
-  btn.innerHTML = '<i class="fas fa-check me-1"></i> Sent';
 });
 </script>
 
+
+
 @endif
+
+
+
+

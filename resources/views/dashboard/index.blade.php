@@ -2,12 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+
   <title>OSK App</title>
 
   <link href="/assets/css/bootstrap.min.css" rel="stylesheet" />
   <link href="/assets/css/app.min.css" rel="stylesheet" />
   <link href="/assets/css/icons.min.css" rel="stylesheet" />
   <link rel="shortcut icon" href="/assets/images/favicon.png">
+
 
   <style>
 /* ===============================
@@ -368,96 +371,9 @@ body {
     </span>
   </div>
 
-  {{-- <div class="mt-2 text-white-50 small">
-    <strong>Minutoes</strong> · Operations Database
-  </div> --}}
-</div>
-
-       {{-- @include('notices.partials.header-notices') --}}
-
-<!-- SETTINGS GRID -->
-<div class="settings-grid mt-4 mb-5">
-
-  {{-- PROPERTIES --}}
-  <a href="/properties" class="settings-card">
-    <div class="settings-icon bg-orange">
-      <i class="fas fa-building"></i>
-    </div>
-    <div class="settings-title">Properties</div>
-    <div class="settings-desc">
-      Manage properties, units, occupancy & leases
-    </div>
-  </a>
-
-{{-- CLIENTS / TENANTS --}}
-<a href="{{ route('property.lease.assign.board', $property->slug) }}" class="settings-card position-relative">
-
-  {{-- 🔔 NEEDS LEASE BADGE --}}
-  @if($pendingClientsCount > 0)
-    <span class="pending-badge">
-      {{ $pendingClientsCount }}
-    </span>
-  @endif
-
-  <div class="settings-icon bg-orange">
-    <i class="fas fa-users"></i>
-  </div>
-
-  <div class="settings-title d-flex align-items-center gap-2">
-    Tenants
-    @if($pendingClientsCount > 0)
-      <span class="pending-text">Needs lease</span>
-    @endif
-  </div>
-
-  <div class="settings-desc">
-    Tenants without an active lease or pending assignment
-  </div>
-
-</a>
-
-{{-- PARTNERS & INVESTORS --}}
-<a href="{{ route('partners.index') }}" class="settings-card">
-  <div class="settings-icon bg-orange">
-    <i class="fas fa-handshake"></i>
-  </div>
-  <div class="settings-title">Partners & Investors</div>
-  <div class="settings-desc">
-    Manage investor profiles, agreements & approvals
-  </div>
-</a>
-
-@if(isset($property))
-  {{-- ASSIGN LEASE --}}
-  <a href="{{ route('property.lease.assign.board', $property->slug) }}"
-     class="settings-card">
-
-    <div class="settings-icon bg-green">
-      <i class="fas fa-random"></i>
-    </div>
-
-    <div class="settings-title">Assign Lease</div>
-
-    <div class="settings-desc">
-      Drag tenants into available units and generate lease links
-    </div>
-
-  </a>
-@endif
-
-
-  {{-- GENERAL SETTINGS --}}
-  <a href="/admin/system-settings" class="settings-card">
-    <div class="settings-icon bg-orange">
-      <i class="fas fa-cog"></i>
-    </div>
-    <div class="settings-title">General Settings</div>
-    <div class="settings-desc">
-      Configure system preferences & defaults
-    </div>
-  </a>
 
 </div>
+
 {{-- 📊 RENT SUMMARY --}}
 @include('properties.rent-summary._summary')
 

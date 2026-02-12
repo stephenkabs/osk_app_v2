@@ -125,7 +125,7 @@
 
     <img src="{{ $hero && $hero->image
             ? Storage::disk('spaces')->url($hero->image)
-            : '/6.webp' }}"
+            : '/placeholder.webp' }}"
          class="login-hero-img"
          alt="Login Illustration">
 
@@ -133,7 +133,7 @@
 
     <div class="absolute bottom-0 left-0 p-8 text-white">
         <h2 class="text-2xl font-bold leading-tight">
-            {{ $hero->title ?? 'Smart HRM Management' }}
+            {{ $hero->title ?? 'OSK App' }}
         </h2>
 
         <p class="mt-2 text-sm text-white/90 max-w-sm">

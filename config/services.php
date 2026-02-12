@@ -53,6 +53,13 @@ return [
     'sms_sender' => env('BREVO_SMS_SENDER'),
 ],
 
+'wirepick_sms' => [
+    'url' => env('WIREPICK_SMS_URL'),
+    'api_key' => env('WIREPICK_SMS_API_KEY'),
+    'from' => env('WIREPICK_SMS_FROM'),
+],
+
+
 
 
 ];

@@ -23,6 +23,7 @@ use App\Http\Controllers\PropertyUserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\UserController;
+use App\Models\LoginHero;
 use App\Http\Controllers\WirepickCallbackController;
 use App\Http\Controllers\WirepickPaymentController;
 use Illuminate\Support\Facades\Route;
@@ -64,7 +65,8 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::get('/', function () {
-    return view('welcome');
+        $hero = LoginHero::where('is_active', true)->first();
+         return view('auth.login',compact('hero'));
 });
 
 Route::middleware('auth','approved')->group(function () {
@@ -196,7 +198,10 @@ Route::get('/admin/security/login-attempts',
 )->middleware(['auth', 'role:admin'])
  ->name('admin.login-attempts');
 
-
+Route::post(
+    '/properties/{property}/leases/{lease}/send-sms',
+    [PropertyLeaseAgreementController::class, 'sendLeaseSms']
+)->name('property.leases.send-sms');
 
 
 Route::post('/investment/pay', [PropertyInvestmentController::class, 'wirepickPayment'])

@@ -27,61 +27,44 @@ class AdminController extends Controller
 //     $user = Auth::user();
 
 //     /* ===============================
-//        LANDLORD DASHBOARD
+//        ROLE REDIRECTS
 //     =============================== */
 //     if ($user->hasRole('landlord')) {
-
-//         $hasProperty = Property::where('user_id', $user->id)->exists();
-
-//         if (! $hasProperty) {
+//         if (!Property::where('user_id', $user->id)->exists()) {
 //             return redirect()->route('properties.create_form');
 //         }
-
 //         return redirect()->route('dashboard.landlord');
 //     }
 
-//     /* ===============================
-//        TENANT DASHBOARD
-//     =============================== */
 //     if ($user->hasRole('tenant')) {
 //         return redirect()->route('dashboard.tenant');
 //     }
 
-// /* ===============================
-//    MANAGER DASHBOARD
-// =============================== */
-// if ($user->hasRole('manager')) {
-
-//     // since you have only ONE property
-//     $property = Property::latest()->first();
-
-//     if (! $property) {
-//         abort(404, 'No property found');
+//     if ($user->hasRole('manager')) {
+//         $property = Property::latest()->first();
+//         abort_unless($property, 404);
+//         return view('dashboard.landlord', compact('property'));
 //     }
 
-//     // 👉 SHOW THE SAME DASHBOARD VIEW
-//     return view('dashboard.landlord', compact('property'));
-// }
-
-
-
-
-//     /* ===============================
-//        INVESTOR
-//     =============================== */
 //     if ($user->hasRole('investor')) {
 //         return redirect()->route('dashboard.investor');
 //     }
 
 //     /* ===============================
-//        ADMIN / STAFF DASHBOARD
+//        ADMIN DASHBOARD
 //     =============================== */
-//  $pendingClientsCount = User::where('property_id', $property->id)
-//     ->whereHas('leases', function ($q) {
-//         $q->where('status', '!=', 'active');
-//     })
-//     ->orWhereDoesntHave('leases')
-//     ->count();
+
+//     $property = Property::latest()->first();
+//     abort_unless($property, 404);
+
+//     $pendingClientsCount = User::where('property_id', $property->id)
+//         ->where(function ($q) {
+//             $q->whereHas('leases', function ($l) {
+//                 $l->where('status', '!=', 'active');
+//             })
+//             ->orWhereDoesntHave('leases');
+//         })
+//         ->count();
 
 
 
@@ -91,43 +74,84 @@ class AdminController extends Controller
 
 // $rows = [];
 // $totals = [
-//     'lettable' => 0,
+//     'lettable' => Unit::where('property_id', $property->id)->sum('rent_amount'),
 //     'rent'     => 0,
 //     'paid'     => 0,
 //     'overdue'  => 0,
+//     'balance'  => 0,
+//     'empty'    => 0, // ✅ ADD THIS
 // ];
 
-// if ($property) {
 
-//     $leases = PropertyLeaseAgreement::with(['user', 'unit', 'payments'])
-//         ->where('property_id', $property->id)
-//         ->whereIn('status', ['pending','active'])
-//         ->get();
-
-//     foreach ($leases as $lease) {
-//         $rent = $lease->rent_amount;
-//         $paid = $lease->payments
-//             ->where('payment_month', $month)
-//             ->sum('amount');
-
-//         $overdue = max($rent - $paid, 0);
-
-//         $rows[] = [
-//             'room'       => optional($lease->unit)->code,
-//             'tenant'     => optional($lease->user)->name,
-//             'lease'      => 'Yes',
-//             'entry_date' => $lease->start_date,
-//             'rent'       => $rent,
-//             'paid'       => $paid,
-//             'overdue'    => $overdue,
-//             'balance'    => $overdue,
-//         ];
-
-//         $totals['rent'] += $rent;
-//         $totals['paid'] += $paid;
-//         $totals['overdue'] += $overdue;
+// /* ===============================
+//    LEASED ROOMS
+// =============================== */
+// $leases = PropertyLeaseAgreement::with([
+//     'user',
+//     'unit',
+//     'payments' => function ($q) use ($month) {
+//         $q->where('payment_month', $month);
 //     }
+// ])
+// ->where('property_id', $property->id)
+// ->whereIn('status', ['pending','active'])
+// ->get();
+
+// foreach ($leases as $lease) {
+
+//     $rent = (float) $lease->rent_amount;
+//     $paid = (float) $lease->payments->sum('amount');
+//     $overdue = max($rent - $paid, 0);
+
+//     $rows[] = [
+//         'room'       => optional($lease->unit)->code ?? '—',
+//         'tenant'     => optional($lease->user)->name ?? '—',
+//         'lease'      => $lease,
+//         'entry_date' => $lease->start_date,
+//         'rent'       => $rent,
+//         'paid'       => $paid,
+//         'overdue'    => $overdue,
+//         'balance'    => $overdue,
+//     ];
+
+
+
+//     // Other totals
+//     $totals['rent']    += $rent;
+//     $totals['paid']    += $paid;
+//     $totals['overdue'] += $overdue;
+//     $totals['balance'] += $overdue;
 // }
+
+
+// /* ===============================
+//    EMPTY ROOMS
+// =============================== */
+// $occupiedUnitIds = $leases
+//     ->pluck('unit_id')
+//     ->filter()
+//     ->values();
+
+// $emptyUnits = Unit::where('property_id', $property->id)
+//     ->whereNotIn('id', $occupiedUnitIds)
+//     ->get();
+
+// foreach ($emptyUnits as $unit) {
+
+//     $rows[] = [
+//         'room'       => $unit->code,
+//         'tenant'     => '—',
+//         'lease'      => null, // 👈 IMPORTANT
+//         'entry_date' => null,
+//         'rent'       => (float) ($unit->rent_amount ?? 0),
+//         'paid'       => 0,
+//         'overdue'    => 0,
+//         'balance'    => 0,
+//     ];
+
+//     $totals['empty'] += (float) ($unit->rent_amount ?? 0);
+// }
+
 // return view('dashboard.index', compact(
 //     'user',
 //     'pendingClientsCount',
@@ -138,6 +162,7 @@ class AdminController extends Controller
 // ));
 
 // }
+
 
 
 
@@ -210,15 +235,20 @@ $totals = [
    LEASED ROOMS
 =============================== */
 $leases = PropertyLeaseAgreement::with([
-    'user',
-    'unit',
-    'payments' => function ($q) use ($month) {
-        $q->where('payment_month', $month);
-    }
-])
-->where('property_id', $property->id)
-->whereIn('status', ['pending','active'])
-->get();
+        'user',
+        'unit',
+        'payments' => function ($q) use ($month) {
+            $q->where('payment_month', $month);
+        }
+    ])
+    ->join('units', 'property_lease_agreements.unit_id', '=', 'units.id')
+    ->where('property_lease_agreements.property_id', $property->id)
+    ->whereIn('property_lease_agreements.status', ['pending','active'])
+    ->orderByRaw("CAST(SUBSTRING_INDEX(units.code, '_', -1) AS UNSIGNED)")
+    ->select('property_lease_agreements.*')
+    ->get();
+
+
 
 foreach ($leases as $lease) {
 
@@ -257,7 +287,9 @@ $occupiedUnitIds = $leases
 
 $emptyUnits = Unit::where('property_id', $property->id)
     ->whereNotIn('id', $occupiedUnitIds)
+    ->orderByRaw("CAST(SUBSTRING_INDEX(code, '_', -1) AS UNSIGNED)")
     ->get();
+
 
 foreach ($emptyUnits as $unit) {
 
@@ -272,6 +304,22 @@ foreach ($emptyUnits as $unit) {
         'balance'    => 0,
     ];
 
+    usort($rows, function ($a, $b) {
+
+    $codeA = $a['room'] ?? '';
+    $codeB = $b['room'] ?? '';
+
+    // Extract number from OSK_XX
+    preg_match('/(\d+)$/', $codeA, $matchA);
+    preg_match('/(\d+)$/', $codeB, $matchB);
+
+    $numA = isset($matchA[1]) ? (int) $matchA[1] : 0;
+    $numB = isset($matchB[1]) ? (int) $matchB[1] : 0;
+
+    return $numA <=> $numB;
+});
+
+
     $totals['empty'] += (float) ($unit->rent_amount ?? 0);
 }
 
@@ -285,8 +333,6 @@ return view('dashboard.index', compact(
 ));
 
 }
-
-
 
 public function landlordDashboard()
 {
