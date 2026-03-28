@@ -12,7 +12,7 @@ class BackupController extends Controller
     public function index()
     {
         // Folder used by Spatie in Spaces
-        $backupPath = 'Laravel';
+        $backupPath = 'OSK';
 
         $files = collect(Storage::disk('spaces')->files($backupPath))
             ->filter(fn ($file) => str_ends_with($file, '.zip'))
