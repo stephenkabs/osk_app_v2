@@ -64,10 +64,9 @@ return [
 
 
 
-    'dump' => [
-        'dump_binary_path' => '/opt/homebrew/opt/mysql-client/bin',
-        'use_single_transaction' => true,
-    ],
+'dump' => [
+    'dump_binary_path' => '/usr/bin',
+],
         ],
 
         'pgsql' => [
