@@ -133,8 +133,8 @@ class WirepickService
         $url = match ($type) {
             'card'   => 'https://apigw.thehotpatch.com/uat/sbiczmecommapi/request',
             //    'card'   => 'https://apigw.thehotpatch.com/uat/sbiczmecommapi/request',
-            'airtel' => 'https://apigw.thehotpatch.com/uat/airtelmoneyopenapi/request',
-            'mtn'    => 'https://apigw.thehotpatch.com/uat/mtnopenapi/request',
+            'airtel' => 'https://apigw.thehotpatch.com/prod/v1/airtelmoneyopenapi/request',
+            'mtn'    => 'https://apigw.thehotpatch.com/prod/v1/mtnopenapi/request',
             default  => throw new \Exception("Unknown gateway type")
         };
 

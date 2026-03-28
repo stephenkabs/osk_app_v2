@@ -130,6 +130,34 @@
     transform: translateY(-1px);
     box-shadow: 0 16px 36px rgba(155,0,0,.45);
 }
+
+.backup-card {
+    background: rgba(255,255,255,.96);
+    backdrop-filter: blur(14px);
+    border-radius: 22px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 20px 45px rgba(0,0,0,.08);
+    padding: 24px;
+}
+
+.backup-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #fff;
+    background: linear-gradient(135deg,#2563eb,#1d4ed8);
+    box-shadow: 0 12px 28px rgba(37,99,235,.24);
+}
+
+.backup-btn {
+    border-radius: 999px;
+    font-weight: 700;
+    padding: 10px 18px;
+}
 </style>
 
 <div class="container settings-wrapper">
@@ -143,11 +171,17 @@
     </div>
 
     {{-- SUCCESS --}}
-    {{-- @if(session('success'))
+    @if(session('success'))
         <div class="alert alert-success rounded-4">
             {{ session('success') }}
         </div>
-    @endif --}}
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger rounded-4">
+            {{ session('error') }}
+        </div>
+    @endif
 
     {{-- SETTINGS FORM --}}
     <form method="POST" action="{{ route('admin.settings.update') }}">
@@ -196,5 +230,50 @@
         </div>
 
     </form>
+
+    <div class="backup-card mt-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-4">
+            <div>
+                <div class="backup-icon mb-3">
+                    <i class="fas fa-database"></i>
+                </div>
+                <h5 class="fw-bold mb-1">Database Backup</h5>
+                <p class="text-muted mb-0">
+                    Run a fresh database backup and download the latest exported file.
+                </p>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+                <form method="POST" action="{{ route('admin.backup.run') }}">
+                    @csrf
+                    <button type="submit" class="btn btn-dark backup-btn">
+                        <i class="fas fa-cloud-upload-alt me-1"></i>
+                        Run Backup
+                    </button>
+                </form>
+
+                @if($latestBackup)
+                    <a href="{{ $latestBackup['url'] }}" target="_blank" class="btn btn-outline-primary backup-btn">
+                        <i class="fas fa-download me-1"></i>
+                        Download Latest
+                    </a>
+                @endif
+            </div>
+        </div>
+
+        <div class="mt-3 pt-3 border-top">
+            @if($latestBackup)
+                <div class="small text-muted">
+                    Latest file: <span class="fw-semibold text-dark">{{ $latestBackup['name'] }}</span>
+                    • {{ number_format($latestBackup['size'] / 1024, 1) }} KB
+                    • {{ \Carbon\Carbon::createFromTimestamp($latestBackup['last_modified'])->diffForHumans() }}
+                </div>
+            @else
+                <div class="small text-muted">
+                    No database backup is available yet. Run a backup to generate one.
+                </div>
+            @endif
+        </div>
+    </div>
 </div>
 @endsection

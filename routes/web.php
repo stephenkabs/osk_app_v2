@@ -20,13 +20,15 @@ use App\Http\Controllers\PropertyPaymentsController;
 use App\Http\Controllers\PropertyReportController;
 use App\Http\Controllers\PropertyUnitController;
 use App\Http\Controllers\PropertyUserController;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\UserController;
-use App\Models\LoginHero;
 use App\Http\Controllers\WirepickCallbackController;
 use App\Http\Controllers\WirepickPaymentController;
+use App\Models\LoginHero;
 use Illuminate\Support\Facades\Route;
+
 
 
 
@@ -544,6 +546,27 @@ Route::get('/properties/{property:slug}/agreements/{agreement:slug}/pdf',
 Route::get('/properties/{property:slug}/agreements/{agreement:slug}/download',
     [PropertyLeaseAgreementController::class, 'download']
 )->name('property.agreements.download');
+
+
+Route::prefix('wirepick/reports')->group(function () {
+
+    // UI page
+    Route::get('/', [ReportsController::class, 'index'])
+        ->name('reports.wirepick');
+
+    // Fetch report
+    Route::post('/fetch', [ReportsController::class, 'fetch'])
+        ->name('reports.wirepick.fetch');
+
+    // Export CSV
+    Route::post('/export/csv', [ReportsController::class, 'exportCsv'])
+        ->name('reports.wirepick.csv');
+
+    // Export PDF
+    Route::post('/export/pdf', [ReportsController::class, 'exportPdf'])
+        ->name('reports.wirepick.pdf');
+});
+
 
 
     Route::middleware(['auth'])

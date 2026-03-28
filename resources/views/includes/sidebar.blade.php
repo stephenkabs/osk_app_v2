@@ -299,12 +299,12 @@
     </li>
 
     <!-- Support / Help -->
-    <li>
-        <a href="/support" class="{{ request()->is('support') ? 'active' : '' }}">
-            <i class="fas fa-life-ring"></i>
-            <span>Support & Help</span>
-        </a>
-    </li>
+ <li>
+    <a href="/wirepick/reports" class="{{ request()->is('wirepick/reports') ? 'active' : '' }}">
+        <i class="fas fa-chart-line"></i>
+        <span>WP Reports</span>
+    </a>
+</li>
 
 </ul>
 

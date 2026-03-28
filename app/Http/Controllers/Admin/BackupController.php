@@ -12,7 +12,7 @@ class BackupController extends Controller
     public function index()
     {
         // Folder used by Spatie in Spaces
-        $backupPath = 'Laravel'; // default Spatie folder
+        $backupPath = 'Laravel';
 
         $files = collect(Storage::disk('spaces')->files($backupPath))
             ->filter(fn ($file) => str_ends_with($file, '.zip'))
@@ -24,7 +24,7 @@ class BackupController extends Controller
                     'last_modified' => Storage::disk('spaces')->lastModified($file),
                     'url' => Storage::disk('spaces')->temporaryUrl(
                         $file,
-                        now()->addMinutes(10) // secure download
+                        now()->addMinutes(10)
                     ),
                 ];
             })
@@ -43,7 +43,6 @@ class BackupController extends Controller
 
             return back()->with('success', 'Database backup completed successfully.');
         } catch (\Throwable $e) {
-
             Log::error('Backup failed', [
                 'error' => $e->getMessage(),
             ]);
